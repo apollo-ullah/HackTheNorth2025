@@ -48,8 +48,6 @@ A revolutionary AI safety companion built with Next.js and VAPI that provides pr
 
 ```bash
 npm install
-# or
-yarn install
 ```
 
 ### 2. Configure Environment Variables
@@ -59,12 +57,15 @@ Create a `.env.local` file in the root directory:
 ```env
 # VAPI Configuration - Get these from your VAPI dashboard
 VAPI_BACKEND_KEY=your_vapi_backend_key_here
-VAPI_FRONTEND_KEY=your_vapi_frontend_key_here
+VAPI_PHONE_NUMBER_ID=your_phone_number_id_here
 
 # Twilio Configuration - Get these from your Twilio dashboard
 TWILIO_ACCOUNT_SID=your_twilio_account_sid_here
 TWILIO_AUTH_TOKEN=your_twilio_auth_token_here
-TWILIO_NUMBER=+16693292501  # Your VAPI phone number from dashboard
+TWILIO_NUMBER=+16693292501
+
+# OpenAI Configuration (for Swift app)
+OPENAI_API_KEY=your_openai_key_here
 ```
 
 #### How to get your credentials:
@@ -86,8 +87,6 @@ TWILIO_NUMBER=+16693292501  # Your VAPI phone number from dashboard
 
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
 The application will start at `http://localhost:3000`
@@ -117,25 +116,13 @@ Example system prompts:
 
 ## 🔧 Stacy API Endpoints
 
-### 🚨 **Emergency APIs**
+### 🚨 **Core APIs**
 
 - `POST /api/stacy/voice-call` - Initiate Stacy safety call with professional dispatcher AI
 - `POST /api/stacy/emergency` - Emergency tool access (case files, SMS, calls)
-- `POST /api/vapi/webhook` - VAPI webhook handler for emergency tool execution
-
-### 📱 **Mobile APIs (for Swift Frontend)**
-
 - `POST /api/stacy/mobile` - Mobile-optimized emergency features
-  - `quick_alert` - Panic button functionality
-  - `check_in` - Safety check with risk assessment
-  - `find_help` - Locate nearby safe places
-  - `stealth_mode` - Discrete emergency communication
-
-### 🛠️ **General APIs**
-
+- `POST /api/vapi/webhook` - VAPI webhook handler for emergency tool execution
 - `GET /api/status` - Configuration status
-- `POST /api/call` - Basic VAPI call functionality
-- `POST /api/assistant` - Create custom assistants
 
 ### Example API Usage
 
@@ -160,22 +147,25 @@ console.log(result);
 
 ```
 ├── components/           # React components
-│   ├── CallForm.tsx     # Form for making calls
-│   ├── AssistantForm.tsx # Form for creating assistants
-│   └── ConfigStatus.tsx # Configuration status display
+│   └── StacyInterface.tsx # Main Stacy safety interface
 ├── lib/                 # Utility libraries
-│   └── vapi-client.ts   # VAPI API client
+│   ├── vapi-client.ts   # VAPI API client
+│   └── stacy-tools.ts   # Emergency response toolkit
 ├── pages/               # Next.js pages and API routes
 │   ├── api/            # API routes
-│   │   ├── call.ts     # Call endpoint
-│   │   ├── assistant.ts # Assistant endpoint
-│   │   ├── status.ts   # Status endpoint
-│   │   └── call/       # Dynamic call status routes
+│   │   ├── stacy/      # Safety and emergency endpoints
+│   │   ├── vapi/       # VAPI webhook handler
+│   │   └── status.ts   # Configuration status
 │   ├── index.tsx       # Main page
 │   └── _app.tsx        # App wrapper
+├── public/             # Static files
+│   ├── index.html      # Static safety interface
+│   ├── app-enhanced.js # Simplified client
+│   └── styles.css      # Styling
+├── Stacy/              # iOS Swift app
+│   └── Stacy/          # Swift source code
 ├── package.json        # Dependencies
-├── tsconfig.json       # TypeScript config
-└── next.config.js      # Next.js config
+└── tsconfig.json       # TypeScript config
 ```
 
 ## 🐛 Troubleshooting

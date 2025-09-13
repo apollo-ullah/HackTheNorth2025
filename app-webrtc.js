@@ -101,7 +101,7 @@ class StacyWebRTCClient {
                         max_response_output_tokens: 120  // Keep responses terse
                     }
                 };
-                try { this.dc.send(JSON.stringify(update)); } catch {}
+                try { this.dc.send(JSON.stringify(update)); } catch { }
             };
 
             // Create local offer
@@ -138,13 +138,13 @@ class StacyWebRTCClient {
             this.micButton.disabled = false;
             this.micButton.querySelector('.mic-status').textContent = 'Click to Talk';
             this.updateStatus('connected', 'Connected');
-            
+
             // Start proactive conversation monitoring
             this.startConversationMonitoring();
-            
+
             // Setup mode toggle
             this.setupModeToggle();
-            
+
             // Setup delete data button
             this.setupDeleteButton();
 
@@ -171,7 +171,7 @@ class StacyWebRTCClient {
             this.micButton.classList.remove('recording');
             this.micButton.querySelector('.mic-status').textContent = 'Click for Voice Mode';
             this.audioVisualizer.classList.remove('active');
-            
+
             // Show initial message about text mode
             this.addMessage('system', '💬 Starting in text mode to save costs. Click the mic or mode button for voice.');
 
@@ -207,10 +207,10 @@ class StacyWebRTCClient {
                 onStateChange: (next, prev) => this.handleStateChange(next, prev)
             };
             const effects = {
-                notifyContactsIfNotYet: () => {},
-                startRollingAudioIfNotYet: () => {},
-                startRoutingIfNotYet: () => {},
-                finalizeIncidentOnce: () => {}
+                notifyContactsIfNotYet: () => { },
+                startRollingAudioIfNotYet: () => { },
+                startRoutingIfNotYet: () => { },
+                finalizeIncidentOnce: () => { }
             };
             this.safety = safetyMod.createSafetySystem(ui, effects);
             this.safetyBus = safetyMod.bus;
@@ -256,7 +256,7 @@ class StacyWebRTCClient {
                 const release = 0.1;   // slower fall
                 const prev = this.levelState.prev || 0;
                 const smooth = rms > prev ? (attack * rms + (1 - attack) * prev)
-                                           : (release * rms + (1 - release) * prev);
+                    : (release * rms + (1 - release) * prev);
                 this.levelState.prev = smooth;
 
                 // Noise gate with hysteresis
@@ -366,7 +366,7 @@ class StacyWebRTCClient {
                     this.assistantSpeaking = false;
                     this.setMicEnabled();
                 }
-                
+
                 // Check compliance after response completes
                 this.checkComplianceAndNudge();
             } else if (msg.type === 'input_audio_buffer.speech_started') {
@@ -422,15 +422,15 @@ class StacyWebRTCClient {
     async sendTypedMessage() {
         const text = (this.textInput?.value || '').trim();
         if (!text) return;
-        
+
         // show user bubble
         this.addMessage('user', text);
         this.textInput.value = '';
         this.markUserActivity(); // Reset conversation timers
-        
+
         // Check for missing fields after user input
         this.injectMissingFieldsCue();
-        
+
         if (this.textMode) {
             // Use cheaper text API when in text mode
             try {
@@ -443,7 +443,7 @@ class StacyWebRTCClient {
                         location: this.currentLocation
                     })
                 });
-                
+
                 const data = await response.json();
                 if (data.reply) {
                     if (data.fallback) {
@@ -453,7 +453,7 @@ class StacyWebRTCClient {
                     } else {
                         this.addMessage('ai', data.reply);
                         console.log('💬 Text API response received (cost-effective)');
-                        
+
                         // Show tool results if any
                         if (data.tool_results && data.tool_results.length > 0) {
                             data.tool_results.forEach(({ tool, result, error }) => {
@@ -491,7 +491,7 @@ class StacyWebRTCClient {
                 this.addMessage('system', '❌ Voice connection not ready - try text mode');
                 return;
             }
-            
+
             try {
                 this.dc.send(JSON.stringify({
                     type: 'conversation.item.create',
@@ -506,7 +506,7 @@ class StacyWebRTCClient {
                 console.error('Failed to send to Realtime API:', e);
             }
         }
-        
+
         this.hideQuickReplies();
     }
 
@@ -528,7 +528,7 @@ class StacyWebRTCClient {
 
         try {
             let result;
-            
+
             switch (name) {
                 case 'casefile_update':
                     result = await this.updateCaseFile(args);
@@ -566,7 +566,7 @@ class StacyWebRTCClient {
 
         } catch (error) {
             console.error(`Tool call error for ${name}:`, error);
-            
+
             // Send error back to model
             if (this.dc && this.dc.readyState === 'open') {
                 this.dc.send(JSON.stringify({
@@ -586,7 +586,7 @@ class StacyWebRTCClient {
         const toolName = msg.name;
         const callId = msg.call_id;
         let args = {};
-        
+
         try {
             // Parse arguments from the message
             args = JSON.parse(msg.arguments || '{}');
@@ -594,12 +594,12 @@ class StacyWebRTCClient {
             console.error('Failed to parse tool arguments:', msg.arguments);
             args = {};
         }
-        
+
         console.log(`🔧 Realtime tool call: ${toolName}`, args);
 
         try {
             let result;
-            
+
             switch (toolName) {
                 case 'casefile_update':
                     result = await this.updateCaseFile(args);
@@ -638,7 +638,7 @@ class StacyWebRTCClient {
 
         } catch (error) {
             console.error(`Tool call error for ${toolName}:`, error);
-            
+
             // Send error back to model
             if (this.dc && this.dc.readyState === 'open') {
                 this.dc.send(JSON.stringify({
@@ -661,10 +661,10 @@ class StacyWebRTCClient {
                 body: JSON.stringify(updates)
             });
             const data = await response.json();
-            
+
             // Show case file update in UI
             this.addMessage('system', `📋 Case file updated: ${Object.keys(updates).join(', ')}`);
-            
+
             return data;
         } catch (error) {
             console.error('Case file update failed:', error);
@@ -693,10 +693,10 @@ class StacyWebRTCClient {
                 body: JSON.stringify(smsData)
             });
             const data = await response.json();
-            
+
             // Show action in UI with location info
             this.addMessage('system', `📱 ${data.message} (Location: ${smsData.lat.toFixed(4)}, ${smsData.lng.toFixed(4)})`);
-            
+
             return data;
         } catch (error) {
             console.error('SMS action failed:', error);
@@ -712,10 +712,10 @@ class StacyWebRTCClient {
                 body: JSON.stringify({ ...args, sessionId: this.sessionId })
             });
             const data = await response.json();
-            
+
             // Show action in UI
             this.addMessage('system', `📞 ${data.message}`);
-            
+
             return data;
         } catch (error) {
             console.error('Call action failed:', error);
@@ -744,15 +744,15 @@ class StacyWebRTCClient {
                 body: JSON.stringify(locationData)
             });
             const data = await response.json();
-            
+
             // Show locations in UI
             if (data.locations && data.locations.length > 0) {
-                const locationsList = data.locations.map(loc => 
+                const locationsList = data.locations.map(loc =>
                     `${loc.name} (${loc.distance}m)`
                 ).join(', ');
                 this.addMessage('system', `📍 Safe locations nearby: ${locationsList}`);
             }
-            
+
             return data;
         } catch (error) {
             console.error('Safe locations failed:', error);
@@ -765,14 +765,14 @@ class StacyWebRTCClient {
             const response = await fetch('/api/emergency/notify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     sessionId: this.sessionId,
                     userName: args.user_name || 'User',
                     triggerReason: args.trigger_reason
                 })
             });
             const data = await response.json();
-            
+
             // Show comprehensive action in UI
             if (data.success) {
                 this.addMessage('system', `🚨 Emergency contact notified: ${data.contact}`);
@@ -783,7 +783,7 @@ class StacyWebRTCClient {
             } else {
                 this.addMessage('system', `❌ Emergency notification failed: ${data.message}`);
             }
-            
+
             return data;
         } catch (error) {
             console.error('Emergency notification failed:', error);
@@ -795,11 +795,11 @@ class StacyWebRTCClient {
         try {
             // Use user's actual phone number if not provided
             const userPhone = args.user_phone || '+15146605707'; // Fallback to your number
-            
+
             const response = await fetch('/api/emergency/call-demo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     sessionId: this.sessionId,
                     userName: args.user_name || 'User',
                     userPhone: userPhone,
@@ -807,13 +807,13 @@ class StacyWebRTCClient {
                 })
             });
             const data = await response.json();
-            
+
             // Show demo emergency briefing status
             if (data.success) {
                 this.addMessage('system', `🚨 Demo emergency briefing call initiated: ${data.call_sid}`);
                 this.addMessage('system', `📞 Conference room: ${data.conference_id}`);
                 this.addMessage('ai', 'I\'ve called demo emergency services and briefed them on your situation. They\'re standing by.');
-                
+
                 // Show connect button if user can speak
                 if (args.can_user_speak !== false && !args.immediate_connect) {
                     this.showConnectToDemoEmergencyButton(userPhone);
@@ -827,7 +827,7 @@ class StacyWebRTCClient {
                     this.addMessage('system', `📱 Emergency contact notified as fallback`);
                 }
             }
-            
+
             return data;
         } catch (error) {
             console.error('Demo emergency briefing failed:', error);
@@ -844,14 +844,14 @@ class StacyWebRTCClient {
             this.connectUserToDemoEmergency(userPhone);
             connectButton.remove();
         };
-        
+
         // Add to quick replies area
         if (this.quickReplies) {
             this.quickReplies.innerHTML = '';
             this.quickReplies.appendChild(connectButton);
             this.quickReplies.style.display = 'flex';
         }
-        
+
         this.addMessage('system', '📞 Click "Connect Me to Demo Emergency Now" when you\'re ready to speak');
     }
 
@@ -865,16 +865,16 @@ class StacyWebRTCClient {
                     userPhone: userPhone
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 this.addMessage('system', `📞 Connecting you to demo emergency: ${data.user_call_sid}`);
                 this.addMessage('ai', 'You\'re now connected to demo emergency services. They\'ve been briefed on your situation.');
             } else {
                 this.addMessage('system', `❌ Failed to connect to demo emergency: ${data.message}`);
             }
-            
+
             return data;
         } catch (error) {
             console.error('Failed to connect to demo emergency:', error);
@@ -897,57 +897,57 @@ class StacyWebRTCClient {
 
     async toggleListening() {
         if (!this.micStream) return;
-        
+
         this.isListening = !this.isListening;
         this.textMode = !this.isListening; // Switch to text mode when not listening
-        
+
         // Mark activity when user starts talking
         if (this.isListening) {
             this.markUserActivity();
         }
-        
+
         if (this.isListening) {
             // Voice mode: resume realtime API connection
             this.micButton.classList.add('recording');
             this.micButton.querySelector('.mic-status').textContent = 'Resuming...';
             this.audioVisualizer.classList.add('active');
-            
+
             // Resume Realtime connection
             this.resumeRealtimeConnection().then(() => {
                 this.micButton.querySelector('.mic-status').textContent = 'Listening...';
                 this.setMicEnabled();
             });
-            
+
             // Update mode toggle
             this.modeToggle.textContent = '🎤 Voice Mode';
             this.modeToggle.classList.remove('text-mode');
-            
+
             console.log('🎤 Voice mode activated - Realtime API resuming');
         } else {
             // Text mode: completely disconnect from Realtime API to stop costs
             this.micButton.classList.remove('recording');
             this.micButton.querySelector('.mic-status').textContent = 'Text Mode - Type Below';
             this.audioVisualizer.classList.remove('active');
-            
+
             // Update mode toggle
             this.modeToggle.textContent = '💬 Text Mode';
             this.modeToggle.classList.add('text-mode');
-            
+
             // Completely close WebRTC connection to stop API usage
             this.pauseRealtimeConnection();
-            
+
             // Show text input area
             this.addMessage('system', '💬 Switched to text mode. WebRTC connection paused to save API costs.');
-            
+
             console.log('💬 Text mode activated - Realtime connection paused');
         }
     }
 
     setMicEnabled() {
         if (!this.micStream || this.realtimeConnectionPaused) return;
-        
+
         const enabled = this.isListening && !this.assistantSpeaking;
-        
+
         // Enable/disable tracks normally when connection is active
         this.micStream.getAudioTracks().forEach(t => {
             t.enabled = enabled;
@@ -972,7 +972,7 @@ class StacyWebRTCClient {
     async requestLocationAccess() {
         try {
             console.log('📍 Requesting location access...');
-            
+
             if (!navigator.geolocation) {
                 console.warn('Geolocation is not supported by this browser');
                 return;
@@ -1014,7 +1014,7 @@ class StacyWebRTCClient {
 
     updateLocation(position) {
         const { latitude, longitude, accuracy } = position.coords;
-        
+
         this.currentLocation = {
             lat: latitude,
             lng: longitude,
@@ -1024,24 +1024,24 @@ class StacyWebRTCClient {
         };
 
         console.log(`📍 Location updated: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (±${Math.round(accuracy)}m)`);
-        
+
         // Update UI
         this.updateLocationStatus('active', `Location: ±${Math.round(accuracy)}m`);
 
         // Update case file with new location if we have a session (but throttle to avoid spam)
         if (this.sessionId && this.currentLocation) {
             // Only update if location changed significantly (>10m) or it's been >60 seconds
-            const shouldUpdate = !this.lastLocationUpdate || 
-                                Date.now() - this.lastLocationUpdate > 60000 ||
-                                this.getLocationDistance(this.lastSentLocation, this.currentLocation) > 10;
-            
+            const shouldUpdate = !this.lastLocationUpdate ||
+                Date.now() - this.lastLocationUpdate > 60000 ||
+                this.getLocationDistance(this.lastSentLocation, this.currentLocation) > 10;
+
             if (shouldUpdate) {
-                this.updateCaseFile({ 
-                    location: this.currentLocation 
+                this.updateCaseFile({
+                    location: this.currentLocation
                 }).catch(e => console.warn('Failed to update location in case file:', e));
                 this.lastLocationUpdate = Date.now();
                 this.lastSentLocation = { ...this.currentLocation };
-                
+
                 // Also send location context to Stacy if this is the first location update
                 if (!this.hasSharedLocationWithStacy && this.dc && this.dc.readyState === 'open') {
                     this.sendLocationContextToStacy();
@@ -1052,8 +1052,8 @@ class StacyWebRTCClient {
 
         // Emit location event for safety system
         if (this.safetyBus) {
-            this.safetyBus.dispatchEvent(new CustomEvent('location', { 
-                detail: this.currentLocation 
+            this.safetyBus.dispatchEvent(new CustomEvent('location', {
+                detail: this.currentLocation
             }));
         }
     }
@@ -1065,27 +1065,27 @@ class StacyWebRTCClient {
     // Calculate distance between two locations in meters
     getLocationDistance(loc1, loc2) {
         if (!loc1 || !loc2) return Infinity;
-        
-        const R = 6371e3; // Earth's radius in meters
-        const φ1 = loc1.lat * Math.PI/180;
-        const φ2 = loc2.lat * Math.PI/180;
-        const Δφ = (loc2.lat-loc1.lat) * Math.PI/180;
-        const Δλ = (loc2.lng-loc1.lng) * Math.PI/180;
 
-        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const R = 6371e3; // Earth's radius in meters
+        const φ1 = loc1.lat * Math.PI / 180;
+        const φ2 = loc2.lat * Math.PI / 180;
+        const Δφ = (loc2.lat - loc1.lat) * Math.PI / 180;
+        const Δλ = (loc2.lng - loc1.lng) * Math.PI / 180;
+
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return R * c;
     }
 
     sendLocationContextToStacy() {
         if (!this.currentLocation || !this.dc || this.dc.readyState !== 'open') return;
-        
+
         const { lat, lng, precision_m } = this.currentLocation;
         const contextMessage = `User location context: I have the user's current location at coordinates ${lat.toFixed(6)}, ${lng.toFixed(6)} with ±${precision_m}m accuracy. Use this information to provide location-aware assistance.`;
-        
+
         try {
             this.dc.send(JSON.stringify({
                 type: 'conversation.item.create',
@@ -1107,17 +1107,17 @@ class StacyWebRTCClient {
             navigator.geolocation.clearWatch(this.locationWatchId);
             this.locationWatchId = null;
         }
-        
+
         if (this.pc) {
             this.pc.close();
             this.pc = null;
         }
-        
+
         if (this.micStream) {
             this.micStream.getTracks().forEach(track => track.stop());
             this.micStream = null;
         }
-        
+
         console.log('📍 Location tracking stopped');
     }
 
@@ -1126,7 +1126,7 @@ class StacyWebRTCClient {
         // Check for user silence every 10 seconds (reduced frequency to save API costs)
         this.silenceCheckInterval = setInterval(() => {
             const silenceDuration = Date.now() - this.lastUserActivity;
-            
+
             // Proactive check-ins based on silence duration (increased thresholds)
             if (silenceDuration > 30000 && !this.conversationTimeout) { // 30 seconds
                 this.triggerProactiveResponse('check_in');
@@ -1144,9 +1144,9 @@ class StacyWebRTCClient {
 
     pauseRealtimeConnection() {
         if (this.realtimeConnectionPaused) return;
-        
+
         console.log('⏸️ Pausing Realtime connection to stop API usage');
-        
+
         // Stop all audio tracks to prevent API usage
         if (this.micStream) {
             this.micStream.getAudioTracks().forEach(track => {
@@ -1154,22 +1154,22 @@ class StacyWebRTCClient {
                 console.log('🔇 Audio track disabled');
             });
         }
-        
+
         // Close data channel to stop Realtime API communication
         if (this.dc && this.dc.readyState === 'open') {
             this.dc.close();
             console.log('📡 Data channel closed');
         }
-        
+
         this.realtimeConnectionPaused = true;
         this.updateStatus('paused', 'Connection Paused');
     }
 
     async resumeRealtimeConnection() {
         if (!this.realtimeConnectionPaused) return;
-        
+
         console.log('▶️ Resuming Realtime connection');
-        
+
         try {
             // Re-enable audio tracks
             if (this.micStream) {
@@ -1182,11 +1182,11 @@ class StacyWebRTCClient {
                 this.micStream = await navigator.mediaDevices.getUserMedia({
                     audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false }
                 });
-                
+
                 // Re-add tracks to peer connection
                 this.micStream.getTracks().forEach(t => this.pc.addTrack(t, this.micStream));
             }
-            
+
             // Recreate data channel if needed
             if (!this.dc || this.dc.readyState !== 'open') {
                 this.dc = this.pc.createDataChannel('oai-events');
@@ -1203,13 +1203,13 @@ class StacyWebRTCClient {
                             }
                         }
                     };
-                    try { this.dc.send(JSON.stringify(update)); } catch {}
+                    try { this.dc.send(JSON.stringify(update)); } catch { }
                 };
             }
-            
+
             this.realtimeConnectionPaused = false;
             this.updateStatus('connected', 'Connected');
-            
+
         } catch (error) {
             console.error('Failed to resume Realtime connection:', error);
             this.addMessage('system', '❌ Failed to resume voice connection');
@@ -1218,11 +1218,11 @@ class StacyWebRTCClient {
 
     setupModeToggle() {
         if (!this.modeToggle) return;
-        
+
         this.modeToggle.onclick = () => {
             this.toggleListening();
         };
-        
+
         // Start in text mode to save costs
         this.modeToggle.textContent = '💬 Text Mode';
         this.modeToggle.classList.add('text-mode');
@@ -1230,28 +1230,28 @@ class StacyWebRTCClient {
 
     setupDeleteButton() {
         if (!this.deleteDataButton) return;
-        
+
         this.deleteDataButton.onclick = async () => {
             const confirmed = confirm('Delete all incident data for this session? This cannot be undone.');
             if (!confirmed) return;
-            
+
             try {
                 const response = await fetch(`/api/casefile/${this.sessionId}`, {
                     method: 'DELETE'
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     this.addMessage('system', '🗑️ All incident data deleted successfully');
-                    
+
                     // Clear local state
                     this.currentLocation = null;
                     this.hasSharedLocationWithStacy = false;
-                    
+
                     // Update UI
                     this.updateLocationStatus('', 'Location: Cleared');
-                    
+
                     console.log('🗑️ Session data deleted');
                 } else {
                     this.addMessage('system', '❌ Failed to delete data');
@@ -1265,7 +1265,7 @@ class StacyWebRTCClient {
 
     markUserActivity() {
         this.lastUserActivity = Date.now();
-        
+
         // Clear any pending proactive responses
         if (this.conversationTimeout) {
             clearTimeout(this.conversationTimeout);
@@ -1280,7 +1280,7 @@ class StacyWebRTCClient {
             this.showTextModeProactivePrompt(type);
             return;
         }
-        
+
         if (!this.dc || this.dc.readyState !== 'open') return;
 
         let prompt = '';
@@ -1331,18 +1331,18 @@ class StacyWebRTCClient {
             navigator.geolocation.clearWatch(this.locationWatchId);
             this.locationWatchId = null;
         }
-        
+
         // Close connections
         if (this.pc) {
             this.pc.close();
             this.pc = null;
         }
-        
+
         if (this.micStream) {
             this.micStream.getTracks().forEach(track => track.stop());
             this.micStream = null;
         }
-        
+
         console.log('🗣️ Conversation monitoring stopped');
         console.log('📍 Location tracking stopped');
     }
@@ -1350,7 +1350,7 @@ class StacyWebRTCClient {
     showTextModeProactivePrompt(type) {
         let promptMessage = '';
         let quickReplies = [];
-        
+
         switch (type) {
             case 'check_in':
                 promptMessage = "💬 Are you still there? I'm here to help with your safety.";
@@ -1365,10 +1365,10 @@ class StacyWebRTCClient {
                 quickReplies = ['Still unsafe', 'Found safety', 'Call 911', 'Contact someone'];
                 break;
         }
-        
+
         // Show proactive message
         this.addMessage('system', promptMessage);
-        
+
         // Show contextual quick replies
         if (quickReplies.length > 0) {
             this.showCustomQuickReplies(quickReplies);
@@ -1377,10 +1377,10 @@ class StacyWebRTCClient {
 
     showCustomQuickReplies(replies) {
         if (!this.quickReplies) return;
-        
+
         // Clear existing replies
         this.quickReplies.innerHTML = '';
-        
+
         // Add new replies
         replies.forEach(reply => {
             const button = document.createElement('button');
@@ -1393,9 +1393,9 @@ class StacyWebRTCClient {
             };
             this.quickReplies.appendChild(button);
         });
-        
+
         this.quickReplies.style.display = 'flex';
-        
+
         // Auto-hide after 30 seconds
         setTimeout(() => {
             this.hideQuickReplies();
@@ -1405,22 +1405,22 @@ class StacyWebRTCClient {
     injectStateContext(state, risk) {
         // Only inject state context in voice mode to save API costs
         if (this.textMode || !this.dc || this.dc.readyState !== 'open') return;
-        
+
         const stateNames = {
             0: 'SAFE',
-            1: 'ELEVATED', 
+            1: 'ELEVATED',
             2: 'CRITICAL',
             3: 'RESOLVED'
         };
-        
+
         const stateName = stateNames[state] || 'UNKNOWN';
-        
+
         try {
             this.dc.send(JSON.stringify({
                 type: "conversation.item.create",
-                item: { 
-                    role: "system", 
-                    content: [{ 
+                item: {
+                    role: "system",
+                    content: [{
                         type: "input_text",
                         text: `state: ${stateName}, risk: ${risk}`
                     }]
@@ -1435,23 +1435,23 @@ class StacyWebRTCClient {
     checkComplianceAndNudge() {
         // Only enforce in voice mode and elevated/critical states
         if (this.textMode || !this.dc || this.dc.readyState !== 'open') return;
-        
+
         // Check if assistant asked a question
         this.lastTurn.questionAsked = /\?/.test(this.lastAssistantText);
-        
+
         this.turnCount++;
-        
+
         // If no tool called and no question asked in elevated/critical, nudge
         if (!this.lastTurn.toolCalled && !this.lastTurn.questionAsked && this.isElevatedOrHigher()) {
             console.log('⚠️ Compliance violation: No tool or question in elevated state');
             this.forceNudge();
         }
-        
+
         // Periodic policy reminders every 3 turns
         if (this.turnCount % 3 === 0) {
             this.injectPolicyReminder();
         }
-        
+
         // Reset turn tracking
         this.lastTurn = { toolCalled: false, questionAsked: false };
     }
@@ -1463,14 +1463,14 @@ class StacyWebRTCClient {
 
     forceNudge() {
         if (!this.dc || this.dc.readyState !== 'open') return;
-        
+
         try {
             // Inject a policy reminder that tightens the loop
-            this.dc.send(JSON.stringify({ 
-                type: "conversation.item.create", 
+            this.dc.send(JSON.stringify({
+                type: "conversation.item.create",
                 item: {
-                    role: "system", 
-                    content: [{ 
+                    role: "system",
+                    content: [{
                         type: "input_text",
                         text: "Policy reminder: In ELEVATED or CRITICAL, you must either call a tool now or ask a single targeted question that unblocks a tool call."
                     }]
@@ -1485,14 +1485,14 @@ class StacyWebRTCClient {
 
     injectPolicyReminder() {
         if (!this.dc || this.dc.readyState !== 'open' || this.textMode) return;
-        
+
         try {
             this.dc.send(JSON.stringify({
                 type: "conversation.item.create",
                 item: {
                     role: "system",
                     content: [{
-                        type: "input_text", 
+                        type: "input_text",
                         text: "Action-first policy is active."
                     }]
                 }
@@ -1506,26 +1506,26 @@ class StacyWebRTCClient {
     async injectMissingFieldsCue() {
         // Only check in voice mode and elevated/critical states
         if (this.textMode || !this.dc || this.dc.readyState !== 'open' || !this.isElevatedOrHigher()) return;
-        
+
         try {
             // Get current case file
             const response = await fetch(`/api/casefile/${this.sessionId}`);
             if (!response.ok) return;
-            
+
             const cf = await response.json();
             const missing = [];
-            
+
             // Check required fields
             if (cf.can_speak === null || cf.can_speak === undefined) missing.push("can_speak");
             if (!cf.location?.lat || !cf.location?.lng) missing.push("location");
             if (!cf.consent?.notify_contact && !this.isHardTrigger()) missing.push("consent.notify_contact");
-            
+
             if (missing.length > 0) {
-                this.dc.send(JSON.stringify({ 
-                    type: "conversation.item.create", 
-                    item: { 
+                this.dc.send(JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
                         role: "system",
-                        content: [{ 
+                        content: [{
                             type: "input_text",
                             text: `Missing fields: ${missing.join(", ")}. Ask ONE question to fill a missing field, then call the appropriate tool.`
                         }]
@@ -1541,25 +1541,25 @@ class StacyWebRTCClient {
     isHardTrigger() {
         // Check if current context includes hard trigger phrases
         return this.lastAssistantText.toLowerCase().includes('hard trigger') ||
-               this.lastAssistantText.toLowerCase().includes('cannot speak') ||
-               this.lastAssistantText.toLowerCase().includes('call now');
+            this.lastAssistantText.toLowerCase().includes('cannot speak') ||
+            this.lastAssistantText.toLowerCase().includes('call now');
     }
 
     handleStateChange(next, prev) {
         // Only handle state changes in voice mode
         if (this.textMode || !this.dc || this.dc.readyState !== 'open') return;
-        
+
         console.log(`🚨 State change: ${prev} → ${next}`);
-        
+
         try {
             // Inject state change context
-            this.dc.send(JSON.stringify({ 
-                type: "conversation.item.create", 
-                item: { 
+            this.dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
                     role: "system",
-                    content: [{ 
-                        type: "input_text", 
-                        text: `state: ${next}` 
+                    content: [{
+                        type: "input_text",
+                        text: `state: ${next}`
                     }]
                 }
             }));
@@ -1573,8 +1573,8 @@ class StacyWebRTCClient {
                             type: "conversation.item.create",
                             item: {
                                 role: "assistant",
-                                content: [{ 
-                                    type: "output_text", 
+                                content: [{
+                                    type: "output_text",
                                     text: "I'm with you. Do you want me to text your contact with your location, or walk you to a safe place first?"
                                 }]
                             }
@@ -1607,5 +1607,4 @@ document.addEventListener('DOMContentLoaded', () => {
     const client = new StacyWebRTCClient();
     client.init();
 });
-
 
