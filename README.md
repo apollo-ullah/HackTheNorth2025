@@ -1,16 +1,38 @@
-# 🎙️ VAPI Voice Agent - Next.js Implementation
+# 🚨 Stacy AI Safety Companion - VAPI Integration
 
-A modern React/Next.js web application to create and manage voice agents that can call humans using the VAPI platform.
+A revolutionary AI safety companion built with Next.js and VAPI that provides professional emergency response capabilities through voice calls, SMS alerts, and real-time safety assistance.
 
-## 🚀 Features
+## 🚀 Stacy Features
 
-- **Outbound Calling**: Make voice calls to any phone number
-- **Voice Assistants**: Create and manage AI voice assistants
-- **Modern Web Interface**: Beautiful React-based dashboard
-- **Real-time Status**: Monitor call status and configuration
-- **Customizable**: Configure assistant behavior with system prompts
-- **TypeScript**: Full type safety and better developer experience
-- **Responsive Design**: Works on desktop and mobile devices
+### 🛡️ **Core Safety Capabilities**
+
+- **Professional Dispatcher AI**: Trained with 911 operator protocols and strict emergency procedures
+- **Voice Safety Calls**: AI companion calls users for immediate support during distress
+- **Real Emergency Actions**: Sends actual SMS alerts, makes emergency calls, builds case files
+- **Risk Assessment**: Analyzes distress levels (SAFE/ELEVATED/CRITICAL) with keyword detection
+- **Location Services**: GPS tracking and safe location finding (police, hospitals, safe places)
+
+### 📞 **Emergency Communication**
+
+- **Comprehensive Emergency Reports**: Professional incident documentation sent to contacts
+- **Demo Emergency Calls**: AI briefs emergency services before connecting user
+- **SMS Integration**: Real Twilio text messages with location and case details
+- **Quick Alert System**: Panic button functionality for immediate help
+- **Stealth Mode**: Discrete emergency communication when user cannot speak
+
+### 🧠 **AI Intelligence**
+
+- **Context-Aware Responses**: Adapts communication based on safety state
+- **Evidence Building**: Structured case file management for law enforcement
+- **Professional Protocols**: One action per turn, dispatcher-style communication
+- **Tool Integration**: 5 emergency tools with real-world actions
+
+### 📱 **Mobile-Ready APIs**
+
+- **Swift Frontend Integration**: Mobile-friendly endpoints for iOS app
+- **Real-time Location**: GPS integration with accuracy monitoring
+- **Battery Awareness**: Optimized for emergency situations
+- **Offline Capabilities**: Works even with limited connectivity
 
 ## 📋 Prerequisites
 
@@ -93,15 +115,27 @@ Example system prompts:
 - **Appointment Scheduler**: "You are an appointment scheduler. Help users book appointments and answer questions about availability."
 - **Survey Conductor**: "You are conducting a brief customer satisfaction survey. Ask 3-5 questions and be conversational."
 
-## 🔧 API Endpoints
+## 🔧 Stacy API Endpoints
 
-The application provides several Next.js API routes:
+### 🚨 **Emergency APIs**
 
-- `GET /` - Web interface
-- `GET /api/status` - Check configuration status
-- `POST /api/call` - Initiate outbound call
-- `POST /api/assistant` - Create new assistant
-- `GET /api/call/[callId]` - Get call status
+- `POST /api/stacy/voice-call` - Initiate Stacy safety call with professional dispatcher AI
+- `POST /api/stacy/emergency` - Emergency tool access (case files, SMS, calls)
+- `POST /api/vapi/webhook` - VAPI webhook handler for emergency tool execution
+
+### 📱 **Mobile APIs (for Swift Frontend)**
+
+- `POST /api/stacy/mobile` - Mobile-optimized emergency features
+  - `quick_alert` - Panic button functionality
+  - `check_in` - Safety check with risk assessment
+  - `find_help` - Locate nearby safe places
+  - `stealth_mode` - Discrete emergency communication
+
+### 🛠️ **General APIs**
+
+- `GET /api/status` - Configuration status
+- `POST /api/call` - Basic VAPI call functionality
+- `POST /api/assistant` - Create custom assistants
 
 ### Example API Usage
 

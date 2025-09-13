@@ -1,0 +1,42 @@
+{
+  "name": "stacy-ai-safety-companion",
+  "version": "1.0.0",
+  "description": "AI Safety Companion with WebSocket and VAPI integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "next-dev": "next dev",
+    "next-build": "next build",
+    "next-start": "next start"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "node-fetch": "^2.6.7",
+    "dotenv": "^16.3.1",
+    "@openai/realtime-api-beta": "^0.1.0",
+    "next": "14.0.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "axios": "^1.6.0",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "ai",
+    "safety",
+    "emergency",
+    "voice",
+    "websocket",
+    "vapi",
+    "twilio"
+  ],
+  "author": "Stacy AI Team",
+  "license": "MIT"
+}

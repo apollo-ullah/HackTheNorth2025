@@ -1,0 +1,167 @@
+{
+  "name": "Stacy AI Safety Companion",
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are Stacy, a professional AI safety companion and emergency dispatcher. Your mission is to protect users in distress and coordinate emergency responses.\n\nCORE PROTOCOLS:\n1. ASSESS SAFETY: Immediately determine user's safety level (SAFE/ELEVATED/CRITICAL)\n2. ONE ACTION PER TURN: Take ONE action OR ask ONE question - never both\n3. PROFESSIONAL TONE: Be calm, clear, and authoritative like a 911 dispatcher\n4. EVIDENCE BUILDING: Collect specific details for case file documentation\n5. REAL ACTIONS: Use tools to send actual SMS, make calls, update case files\n\nSAFETY STATES:\n- SAFE: Warm, conversational, general safety tips\n- ELEVATED: Procedural, focused questions, building evidence\n- CRITICAL: Minimal words, immediate action, emergency protocols\n\nDISPATCHER PLAYBOOK:\n1. Immediate danger? → Can you speak safely? → Location → Action → Evidence\n2. Build case file with: threat description, location, timeline, user status\n3. Real emergency actions: SMS contacts, call emergency services, coordinate response\n\nCRITICAL RULES:\n- If user says \"help\", \"emergency\", \"following me\" → IMMEDIATE CRITICAL mode\n- If user can't speak → Switch to text-based emergency protocols\n- Always update case file with new information\n- Never hallucinate - use real tools for real actions\n- One question at a time in emergency situations\n\nRemember: You are not just chatting - you are a professional emergency dispatcher with real tools to save lives."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "update_casefile",
+          "description": "Update the emergency case file with new information",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "caseId": {
+                "type": "string",
+                "description": "Unique case identifier"
+              },
+              "riskLevel": {
+                "type": "string",
+                "enum": ["SAFE", "ELEVATED", "CRITICAL"],
+                "description": "Current risk assessment level"
+              },
+              "threat": {
+                "type": "object",
+                "properties": {
+                  "description": { "type": "string" },
+                  "type": { "type": "string" },
+                  "immediacy": {
+                    "type": "string",
+                    "enum": ["immediate", "developing", "potential"]
+                  }
+                }
+              },
+              "userStatus": {
+                "type": "object",
+                "properties": {
+                  "canSpeak": { "type": "boolean" },
+                  "canText": { "type": "boolean" },
+                  "isHidden": { "type": "boolean" }
+                }
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "lat": { "type": "number" },
+                  "lng": { "type": "number" },
+                  "accuracy": { "type": "number" }
+                }
+              }
+            },
+            "required": ["caseId"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "notify_emergency_contact",
+          "description": "Send comprehensive emergency report to emergency contact",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "contactName": { "type": "string" },
+              "contactPhone": { "type": "string" },
+              "urgentMessage": { "type": "string" },
+              "includeLocation": { "type": "boolean", "default": true }
+            },
+            "required": ["contactName", "contactPhone", "urgentMessage"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "call_demo_emergency",
+          "description": "Place emergency briefing call to demonstrate emergency services communication",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "briefingScript": { "type": "string" },
+              "caseId": { "type": "string" }
+            },
+            "required": ["briefingScript", "caseId"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "send_location_sms",
+          "description": "Send SMS with current location to any phone number",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "phoneNumber": { "type": "string" },
+              "message": { "type": "string" },
+              "urgent": { "type": "boolean", "default": false }
+            },
+            "required": ["phoneNumber", "message"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "get_safe_locations",
+          "description": "Find nearby safe locations like police stations, hospitals",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "radius": { "type": "number", "default": 5000 }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "pNInz6obpgDQGcFmaJgB",
+    "speed": 1.0,
+    "chunkPlan": {
+      "enabled": true,
+      "minCharacters": 30
+    }
+  },
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-2",
+    "language": "en",
+    "smartFormat": true,
+    "endpointing": 300
+  },
+  "firstMessage": "This is Stacy, your AI safety companion. I'm here to help you stay safe. What's your current situation?",
+  "firstMessageMode": "assistant-speaks-first",
+  "endCallMessage": "Stay safe. You can call me again anytime you need help.",
+  "endCallPhrases": ["goodbye stacy", "end call", "hang up"],
+  "serverMessages": [
+    "conversation-update",
+    "function-call",
+    "hang",
+    "speech-update"
+  ],
+  "clientMessages": [
+    "conversation-update",
+    "function-call",
+    "hang",
+    "speech-update"
+  ],
+  "server": {
+    "url": "https://your-domain.vercel.app/api/vapi/webhook",
+    "timeoutSeconds": 20
+  },
+  "backgroundSound": "office",
+  "maxDurationSeconds": 1800,
+  "voicemailDetection": {
+    "provider": "twilio",
+    "enabled": true
+  }
+}
