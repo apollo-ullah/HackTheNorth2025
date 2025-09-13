@@ -12,6 +12,7 @@ struct ContentView: View {
     @StateObject private var directionsService = DirectionsService()
     @State private var pulseAnimation = false
     @State private var showingNearbyPlaces = false
+    @State private var showingTestButtons = false
     
     var body: some View {
         NavigationView {
@@ -30,26 +31,47 @@ struct ContentView: View {
                         )
                     }
                     
-                    // Header with navigation button
+                    // Header with navigation buttons
                     HStack {
                         Spacer()
-                        Button(action: {
-                            showingNearbyPlaces = true
-                        }) {
-                            HStack {
-                                Image(systemName: "location.fill")
-                                Text("Find Places")
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                showingTestButtons = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "wrench.and.screwdriver.fill")
+                                    Text("Test")
+                                }
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(Color.purple.opacity(0.3))
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.purple, lineWidth: 1)
+                                )
                             }
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                            .background(Color.blue.opacity(0.3))
-                            .cornerRadius(20)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.blue, lineWidth: 1)
-                            )
+                            
+                            Button(action: {
+                                showingNearbyPlaces = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "location.fill")
+                                    Text("Find Places")
+                                }
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(Color.blue.opacity(0.3))
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.blue, lineWidth: 1)
+                                )
+                            }
                         }
                     }
                     .padding(.horizontal)
@@ -199,6 +221,9 @@ struct ContentView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showingNearbyPlaces) {
             NearbyPlacesView()
+        }
+        .sheet(isPresented: $showingTestButtons) {
+            TestButtonsView()
         }
         .onAppear {
             voiceManager.setServices(
