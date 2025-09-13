@@ -73,7 +73,7 @@ export class VAPIClient {
 
   async makeOutboundCall(
     phoneNumber: string,
-    assistantConfig?: { name?: string; system_prompt?: string },
+    assistantConfig?: { name?: string; system_prompt?: string; first_message?: string },
     phoneNumberId?: string
   ): Promise<VAPIResponse> {
     // Based on official VAPI documentation: https://docs.vapi.ai/api-reference/calls/create
@@ -215,7 +215,7 @@ export class VAPIClient {
           provider: '11labs',
           voiceId: 'pNInz6obpgDQGcFmaJgB', // Professional female voice for safety contexts
         },
-        firstMessage: 'This is Stacy, your AI safety companion. I\'m here to help you stay safe. What\'s your situation?',
+        firstMessage: assistantConfig.first_message || 'This is Stacy, your AI safety companion. I\'m here to help you stay safe. What\'s your situation?',
       };
 
       // Add assistant name if provided

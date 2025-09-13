@@ -1,41 +1,43 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { VAPIClient } from '../../../lib/vapi-client';
 
-// Professional Stacy AI Safety Companion system prompt
-const STACY_SYSTEM_PROMPT = `You are Stacy, a professional AI safety companion and emergency dispatcher. Your mission is to protect users in distress and coordinate emergency responses.
+// Creates a comprehensive briefing for emergency dispatch
+function createDispatcherBriefing(conversationContext: any, userLocation: any, emergencyContacts: any[]) {
+  const timestamp = new Date().toLocaleString();
+  const locationText = userLocation ? 
+    `Location: ${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)} (±${Math.round(userLocation.accuracy)}m accuracy)` :
+    'Location: Not available';
 
-CORE PROTOCOLS:
-1. ASSESS SAFETY: Immediately determine user's safety level (SAFE/ELEVATED/CRITICAL)
-2. ONE ACTION PER TURN: Take ONE action OR ask ONE question - never both
-3. PROFESSIONAL TONE: Be calm, clear, and authoritative like a 911 dispatcher
-4. EVIDENCE BUILDING: Collect specific details for case file documentation
-5. REAL ACTIONS: Use tools to send actual SMS, make calls, update case files
+  // Extract key incident details from conversation
+  const messages = conversationContext?.messages || [];
+  const userMessages = messages.filter((m: any) => m.role === 'user').slice(-5);
+  const incidentSummary = userMessages.length > 0 ? 
+    userMessages.map((m: any) => m.content).join('. ') :
+    'Emergency escalation requested from Stacy AI Safety Companion';
 
-SAFETY STATES:
-- SAFE: Warm, conversational, general safety tips
-- ELEVATED: Procedural, focused questions, building evidence
-- CRITICAL: Minimal words, immediate action, emergency protocols
+  const riskLevel = conversationContext?.riskLevel || 'UNKNOWN';
+  const sessionId = conversationContext?.sessionId || 'Unknown';
 
-DISPATCHER PLAYBOOK:
-1. Immediate danger? → Can you speak safely? → Location → Action → Evidence
-2. Build case file with: threat description, location, timeline, user status
-3. Real emergency actions: SMS contacts, call emergency services, coordinate response
+  return `Hello, this is Stacy, an artificial intelligence safety agent. I am calling to report an incident and complete a handoff to emergency dispatch.
 
-TOOL USAGE:
-- update_casefile: Document every interaction with structured evidence
-- notify_emergency_contact: Send comprehensive emergency reports
-- call_demo_emergency: Brief emergency services before user connects
-- send_contact_sms: Direct communication with location sharing
-- get_safe_locations: Find nearby police, hospitals, safe places
+INCIDENT BRIEFING:
+- Time: ${timestamp}
+- Session ID: ${sessionId}
+- Risk Level: ${riskLevel}
+- ${locationText}
 
-CRITICAL RULES:
-- If user says "help", "emergency", "following me" → IMMEDIATE CRITICAL mode
-- If user can't speak → Switch to text-based emergency protocols
-- Always update case file with new information
-- Never hallucinate - use real tools for real actions
-- One question at a time in emergency situations
+INCIDENT SUMMARY:
+${incidentSummary}
 
-Remember: You are not just chatting - you are a professional emergency dispatcher with real tools to save lives.`;
+EMERGENCY CONTACTS:
+${emergencyContacts && emergencyContacts.length > 0 ? 
+  emergencyContacts.map(c => `- ${c.name} (${c.relationship}): ${c.phone}`).join('\n') :
+  'No emergency contacts provided'}
+
+This individual has been assessed as requiring emergency assistance. They have requested connection to emergency dispatch through our AI safety platform. I am now completing the handoff to you.
+
+The person you will be speaking with next is the individual who requested emergency assistance. Please take over from here.`;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -52,33 +54,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Twilio credentials not fully configured' });
   }
 
-  const { phone_number, user_location, emergency_contacts } = req.body;
+  const { phone_number, user_location, emergency_contacts, conversation_context } = req.body;
 
   if (!phone_number) {
     return res.status(400).json({ error: 'Phone number is required' });
   }
 
   try {
+    console.log('📞 Police escalation call initiated');
+    console.log('📞 Phone number:', phone_number);
+    console.log('📞 Location:', user_location);
+    console.log('📞 Conversation context:', conversation_context);
+    console.log('📞 VAPI_PHONE_NUMBER_ID:', VAPI_PHONE_NUMBER_ID);
+    console.log('📞 TWILIO_NUMBER:', TWILIO_NUMBER);
+
     const vapiClient = new VAPIClient(VAPI_BACKEND_KEY, {
       accountSid: TWILIO_ACCOUNT_SID,
       authToken: TWILIO_AUTH_TOKEN,
       phoneNumber: TWILIO_NUMBER,
     });
 
-    // Enhanced system prompt with user context
-    let contextualPrompt = STACY_SYSTEM_PROMPT;
+    // Create comprehensive dispatcher briefing
+    const briefingScript = createDispatcherBriefing(conversation_context, user_location, emergency_contacts || []);
     
-    if (user_location) {
-      contextualPrompt += `\n\nUSER LOCATION: ${user_location.lat}, ${user_location.lng} (accuracy: ${user_location.accuracy}m)`;
-    }
-    
-    if (emergency_contacts && emergency_contacts.length > 0) {
-      contextualPrompt += `\n\nEMERGENCY CONTACTS: ${emergency_contacts.map((c: any) => `${c.name} (${c.relationship}): ${c.phone}`).join(', ')}`;
-    }
+    console.log('📞 Briefing script:', briefingScript);
 
+    // Create VAPI assistant that delivers the briefing and then transfers
     const assistantConfig = {
-      name: 'Stacy AI Safety Companion',
-      system_prompt: contextualPrompt,
+      name: 'Stacy AI Emergency Dispatcher',
+      system_prompt: `You are Stacy, an AI emergency dispatcher calling to brief emergency services and complete a handoff.
+
+You must start by delivering this exact briefing:
+${briefingScript}
+
+After delivering the briefing, follow this protocol:
+1. Say: "I am now transferring the individual to you. Please stand by."
+2. Wait for acknowledgment from dispatcher
+3. Complete the handoff by saying: "Transferring now. The individual is on the line."
+4. Then stay silent to allow the dispatcher to take over
+
+CRITICAL RULES:
+- Start with the briefing immediately
+- Only provide information that was given to you
+- If asked about details you don't have, say "I don't have that information"
+- Stay professional and calm throughout
+- Complete the handoff clearly
+
+This is a real emergency situation. Be professional and efficient.`,
+      first_message: briefingScript
     };
 
     const phoneNumberId = process.env.VAPI_PHONE_NUMBER_ID;
@@ -92,18 +115,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Generate unique case ID for this call
     const caseId = `case_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    console.log('📞 Police call successful:', result.id);
+    
     res.status(200).json({
       success: true,
       callId: result.id,
       caseId: caseId,
-      message: 'Stacy safety call initiated successfully',
+      message: 'Emergency dispatch call initiated with full briefing',
       stacyNumber: TWILIO_NUMBER,
+      briefing: briefingScript
     });
 
   } catch (error) {
-    console.error('Stacy voice call error:', error);
+    console.error('📞 VAPI call error:', error);
+    console.error('📞 Error details:', error instanceof Error ? error.message : error);
+    
+    // Parse VAPI error for better debugging
+    let errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    if (errorMessage.includes('Failed to make call:')) {
+      try {
+        const vapiError = JSON.parse(errorMessage.replace('Failed to make call: ', ''));
+        console.error('📞 VAPI API Error:', vapiError);
+        errorMessage = `VAPI Error: ${vapiError.message || vapiError.error || errorMessage}`;
+      } catch (parseError) {
+        console.error('📞 Could not parse VAPI error:', parseError);
+      }
+    }
+    
     res.status(500).json({ 
-      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      error: errorMessage,
+      debug: {
+        phoneNumber: phone_number,
+        hasPhoneNumberId: !!VAPI_PHONE_NUMBER_ID,
+        hasTwilioConfig: !!(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_NUMBER)
+      }
     });
   }
 }
