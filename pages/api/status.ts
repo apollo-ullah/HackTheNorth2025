@@ -6,9 +6,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const status = {
-    api_key_configured: !!process.env.VAPI_API_KEY,
-    assistant_id_configured: !!process.env.VAPI_ASSISTANT_ID,
-    phone_number_id_configured: !!process.env.VAPI_PHONE_NUMBER_ID,
+    vapi_backend_key_configured: !!process.env.VAPI_BACKEND_KEY,
+    vapi_frontend_key_configured: !!process.env.VAPI_FRONTEND_KEY,
+    twilio_configured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_NUMBER),
   };
 
   res.status(200).json(status);

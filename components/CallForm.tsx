@@ -8,6 +8,8 @@ interface CallFormProps {
 export default function CallForm({ onCallInitiated }: CallFormProps) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customMessage, setCustomMessage] = useState('');
+  const [assistantName, setAssistantName] = useState('');
+  const [systemPrompt, setSystemPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<{
     type: 'success' | 'error' | 'warning';
@@ -23,6 +25,8 @@ export default function CallForm({ onCallInitiated }: CallFormProps) {
       const response = await axios.post('/api/call', {
         phone_number: phoneNumber,
         message: customMessage,
+        assistant_name: assistantName,
+        system_prompt: systemPrompt,
       });
 
       setStatus({
@@ -37,6 +41,8 @@ export default function CallForm({ onCallInitiated }: CallFormProps) {
       // Clear form
       setPhoneNumber('');
       setCustomMessage('');
+      setAssistantName('');
+      setSystemPrompt('');
     } catch (error: any) {
       setStatus({
         type: 'error',
@@ -59,11 +65,25 @@ export default function CallForm({ onCallInitiated }: CallFormProps) {
           required
           disabled={isLoading}
         />
+        <input
+          type="text"
+          value={assistantName}
+          onChange={(e) => setAssistantName(e.target.value)}
+          placeholder="Assistant name (optional, defaults to 'Voice Agent')"
+          disabled={isLoading}
+        />
+        <textarea
+          value={systemPrompt}
+          onChange={(e) => setSystemPrompt(e.target.value)}
+          placeholder="System prompt (optional, e.g., 'You are a helpful customer service agent')"
+          rows={3}
+          disabled={isLoading}
+        />
         <textarea
           value={customMessage}
           onChange={(e) => setCustomMessage(e.target.value)}
           placeholder="Custom message (optional)"
-          rows={3}
+          rows={2}
           disabled={isLoading}
         />
         <button type="submit" disabled={isLoading}>

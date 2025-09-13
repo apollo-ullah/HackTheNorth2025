@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface ConfigStatusData {
-  api_key_configured: boolean;
-  assistant_id_configured: boolean;
-  phone_number_id_configured: boolean;
+  vapi_backend_key_configured: boolean;
+  vapi_frontend_key_configured: boolean;
+  twilio_configured: boolean;
 }
 
 export default function ConfigStatus() {
@@ -40,25 +40,25 @@ export default function ConfigStatus() {
       <h2>📋 Configuration Status</h2>
       <div>
         <p>
-          <strong>API Key:</strong>{' '}
+          <strong>VAPI Backend Key:</strong>{' '}
           <span>
-            {status?.api_key_configured ? 'Configured ✅' : 'Not configured ❌'}
+            {status?.vapi_backend_key_configured ? 'Configured ✅' : 'Not configured ❌'}
           </span>
         </p>
         <p>
-          <strong>Assistant ID:</strong>{' '}
+          <strong>VAPI Frontend Key:</strong>{' '}
           <span>
-            {status?.assistant_id_configured ? 'Configured ✅' : 'Not configured ❌'}
+            {status?.vapi_frontend_key_configured ? 'Configured ✅' : 'Not configured ❌'}
           </span>
         </p>
         <p>
-          <strong>Phone Number ID:</strong>{' '}
+          <strong>Twilio Configuration:</strong>{' '}
           <span>
-            {status?.phone_number_id_configured ? 'Configured ✅' : 'Not configured ❌'}
+            {status?.twilio_configured ? 'Configured ✅' : 'Not configured ❌'}
           </span>
         </p>
       </div>
-      {(!status?.api_key_configured || !status?.assistant_id_configured || !status?.phone_number_id_configured) && (
+      {(!status?.vapi_backend_key_configured || !status?.vapi_frontend_key_configured || !status?.twilio_configured) && (
         <div className="status warning">
           <p>⚠️ Some configuration is missing. Please check your .env.local file.</p>
         </div>

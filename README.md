@@ -35,30 +35,30 @@ yarn install
 Create a `.env.local` file in the root directory:
 
 ```env
-# Get these from your VAPI dashboard
-VAPI_API_KEY=your_actual_vapi_api_key
-VAPI_ASSISTANT_ID=your_actual_assistant_id
-VAPI_PHONE_NUMBER_ID=your_actual_phone_number_id
+# VAPI Configuration - Get these from your VAPI dashboard
+VAPI_BACKEND_KEY=your_vapi_backend_key_here
+VAPI_FRONTEND_KEY=your_vapi_frontend_key_here
+
+# Twilio Configuration - Get these from your Twilio dashboard
+TWILIO_ACCOUNT_SID=your_twilio_account_sid_here
+TWILIO_AUTH_TOKEN=your_twilio_auth_token_here
+TWILIO_NUMBER=+16693292501  # Your VAPI phone number from dashboard
 ```
 
-#### How to get VAPI credentials:
+#### How to get your credentials:
 
-1. **API Key**:
+1. **VAPI Keys**:
 
    - Go to [VAPI Dashboard](https://dashboard.vapi.ai)
    - Navigate to Settings → API Keys
-   - Copy your API key
+   - Copy your Backend Key (for server-side API calls)
+   - Copy your Frontend Key (for client-side integration)
 
-2. **Assistant ID**:
-
-   - Go to Assistants tab in your dashboard
-   - Create a new assistant or use existing one
-   - Copy the Assistant ID from the assistant details
-
-3. **Phone Number ID**:
-   - Go to Phone Numbers tab
-   - Purchase or configure a phone number
-   - Copy the Phone Number ID
+2. **Twilio Configuration**:
+   - Go to [Twilio Console](https://console.twilio.com/)
+   - Find your Account SID and Auth Token in the dashboard
+   - Purchase a phone number or use an existing one
+   - Copy the phone number in E.164 format (e.g., +1234567890)
 
 ### 3. Run the Development Server
 

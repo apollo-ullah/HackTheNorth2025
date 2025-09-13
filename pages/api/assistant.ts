@@ -6,10 +6,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { VAPI_API_KEY } = process.env;
+  const { VAPI_BACKEND_KEY } = process.env;
 
-  if (!VAPI_API_KEY) {
-    return res.status(500).json({ detail: 'VAPI API key not configured' });
+  if (!VAPI_BACKEND_KEY) {
+    return res.status(500).json({ detail: 'VAPI Backend key not configured' });
   }
 
   const { name, system_prompt } = req.body;
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const vapiClient = new VAPIClient(VAPI_API_KEY);
+    const vapiClient = new VAPIClient(VAPI_BACKEND_KEY);
     const result = await vapiClient.createAssistant(name, system_prompt);
 
     res.status(200).json(result);

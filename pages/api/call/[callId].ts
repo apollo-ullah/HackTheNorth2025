@@ -6,11 +6,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { VAPI_API_KEY } = process.env;
+  const { VAPI_BACKEND_KEY } = process.env;
   const { callId } = req.query;
 
-  if (!VAPI_API_KEY) {
-    return res.status(500).json({ detail: 'VAPI API key not configured' });
+  if (!VAPI_BACKEND_KEY) {
+    return res.status(500).json({ detail: 'VAPI Backend key not configured' });
   }
 
   if (!callId || typeof callId !== 'string') {
@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const vapiClient = new VAPIClient(VAPI_API_KEY);
+    const vapiClient = new VAPIClient(VAPI_BACKEND_KEY);
     const result = await vapiClient.getCallStatus(callId);
 
     res.status(200).json(result);
