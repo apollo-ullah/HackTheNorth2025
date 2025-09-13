@@ -98,26 +98,10 @@ class EnhancedStacyClient {
     }
 
     setupEventListeners() {
-        // Microphone button - press and hold
-        this.elements.micButton.addEventListener('mousedown', (e) => {
+        // Microphone button - simple toggle (NO MORE PRESS AND HOLD!)
+        this.elements.micButton.addEventListener('click', (e) => {
             e.preventDefault();
-            this.startRecording();
-        });
-
-        this.elements.micButton.addEventListener('mouseup', (e) => {
-            e.preventDefault();
-            this.stopRecording();
-        });
-
-        // Touch events for mobile
-        this.elements.micButton.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.startRecording();
-        });
-
-        this.elements.micButton.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            this.stopRecording();
+            this.toggleVoiceMode();
         });
 
         // Text input
@@ -183,7 +167,9 @@ class EnhancedStacyClient {
 
     connectWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}`;
+        const host = window.location.hostname;
+        const port = window.STACY_WS_PORT || 3001;
+        const wsUrl = `${protocol}//${host}:${port}`;
 
         this.ws = new WebSocket(wsUrl);
 
@@ -503,11 +489,20 @@ class EnhancedStacyClient {
     }
 
     toggleMode() {
-        this.mode = this.mode === 'webrtc' ? 'vapi' : 'webrtc';
-        this.elements.modeToggle.textContent = this.mode === 'webrtc' ? '🎤 WebRTC Mode' : '📞 VAPI Mode';
-        this.elements.modeToggle.className = `mode-button ${this.mode === 'webrtc' ? '' : 'text-mode'}`;
+        if (this.isRecording) {
+            this.stopContinuousVoice();
+        }
+
+        this.mode = this.mode === 'voice' ? 'text' : 'voice';
+        this.elements.modeToggle.textContent = this.mode === 'voice' ? '💬 Text Mode' : '🎤 Voice Mode';
+        this.elements.modeToggle.className = `mode-button ${this.mode === 'text' ? 'text-mode' : ''}`;
 
         this.addMessage('system', `Switched to ${this.mode.toUpperCase()} mode`);
+
+        // Update mic button text
+        if (this.mode === 'voice') {
+            this.elements.micButton.querySelector('.mic-status').textContent = 'Click to Start Voice';
+        }
     }
 
     // Enhanced location tracking
@@ -604,7 +599,15 @@ class EnhancedStacyClient {
         statusText.textContent = text;
     }
 
-    async startRecording() {
+    toggleVoiceMode() {
+        if (!this.isRecording) {
+            this.startContinuousVoice();
+        } else {
+            this.stopContinuousVoice();
+        }
+    }
+
+    async startContinuousVoice() {
         if (!this.isConnected || this.isRecording) return;
 
         try {
@@ -621,20 +624,59 @@ class EnhancedStacyClient {
             await this.setupAudioProcessing();
             this.isRecording = true;
 
+            // Update UI for continuous voice mode
             this.elements.micButton.classList.add('recording');
-            this.elements.micButton.querySelector('.mic-status').textContent = 'Recording...';
+            this.elements.micButton.querySelector('.mic-status').textContent = 'Voice Active - Click to Stop';
             this.elements.audioVisualizer.classList.add('active');
 
             this.sendMessage({
                 type: 'start_conversation'
             });
 
-            console.log('Started recording');
+            this.addMessage('system', '🎤 Voice mode active - Stacy is listening continuously. Speak naturally about your situation.');
+
+            console.log('Started continuous voice mode');
 
         } catch (error) {
-            console.error('Error starting recording:', error);
+            console.error('Error starting voice mode:', error);
             this.addMessage('system', 'Unable to access microphone. Please check permissions.');
         }
+    }
+
+    stopContinuousVoice() {
+        if (!this.isRecording) return;
+
+        this.isRecording = false;
+
+        // Clean up audio processing
+        if (this.processorNode) {
+            this.processorNode.disconnect();
+            this.processorNode = null;
+        }
+
+        if (this.sourceNode) {
+            this.sourceNode.disconnect();
+            this.sourceNode = null;
+        }
+
+        if (this.audioContext && this.audioContext.state !== 'closed') {
+            this.audioContext.close();
+            this.audioContext = null;
+        }
+
+        if (this.audioStream) {
+            this.audioStream.getTracks().forEach(track => track.stop());
+            this.audioStream = null;
+        }
+
+        // Update UI
+        this.elements.micButton.classList.remove('recording');
+        this.elements.micButton.querySelector('.mic-status').textContent = 'Click to Start Voice';
+        this.elements.audioVisualizer.classList.remove('active');
+
+        this.addMessage('system', '💬 Voice mode stopped. Use text chat or click the microphone to restart voice mode.');
+
+        console.log('Stopped continuous voice mode');
     }
 
     async setupAudioProcessing() {
@@ -679,46 +721,6 @@ class EnhancedStacyClient {
         }
     }
 
-    stopRecording() {
-        if (!this.isRecording) return;
-
-        try {
-            this.isRecording = false;
-
-            if (this.audioBuffer.length > 0) {
-                this.sendAudioBuffer();
-            }
-
-            if (this.processorNode) {
-                this.processorNode.disconnect();
-                this.processorNode = null;
-            }
-
-            if (this.sourceNode) {
-                this.sourceNode.disconnect();
-                this.sourceNode = null;
-            }
-
-            if (this.audioContext && this.audioContext.state !== 'closed') {
-                this.audioContext.close();
-                this.audioContext = null;
-            }
-
-            if (this.audioStream) {
-                this.audioStream.getTracks().forEach(track => track.stop());
-                this.audioStream = null;
-            }
-
-            this.elements.micButton.classList.remove('recording');
-            this.elements.micButton.querySelector('.mic-status').textContent = 'Press & Hold to Talk';
-            this.elements.audioVisualizer.classList.remove('active');
-
-            console.log('Stopped recording');
-
-        } catch (error) {
-            console.error('Error stopping recording:', error);
-        }
-    }
 
     sendAudioBuffer() {
         if (!this.isConnected || this.audioBuffer.length === 0) return;

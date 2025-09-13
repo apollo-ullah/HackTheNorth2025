@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Environment variables
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.STACY_WS_PORT || process.env.PORT || 3001;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const VAPI_BACKEND_KEY = process.env.VAPI_BACKEND_KEY;
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;

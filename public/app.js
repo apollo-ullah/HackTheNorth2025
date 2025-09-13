@@ -89,7 +89,9 @@ class StacyClient {
 
     connectWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}`;
+        const host = window.location.hostname;
+        const port = window.STACY_WS_PORT || 3001;
+        const wsUrl = `${protocol}//${host}:${port}`;
         
         this.ws = new WebSocket(wsUrl);
 
