@@ -1,4 +1,8 @@
 // Stacy AI Safety Companion - WebSocket Server with VAPI Integration
+// Load environment variables from .env.local (and .env) for standalone server
+try { require('dotenv').config({ path: '.env.local' }); } catch { }
+try { require('dotenv').config(); } catch { }
+
 const express = require('express');
 const { createServer } = require('http');
 const { WebSocketServer } = require('ws');

@@ -6,7 +6,7 @@ class StacyClient {
         this.isRecording = false;
         this.isConnected = false;
         this.currentLocation = null;
-        
+
         this.initializeElements();
         this.setupEventListeners();
         this.connectWebSocket();
@@ -92,7 +92,7 @@ class StacyClient {
         const host = window.location.hostname;
         const port = window.STACY_WS_PORT || 3001;
         const wsUrl = `${protocol}//${host}:${port}`;
-        
+
         this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
@@ -116,7 +116,7 @@ class StacyClient {
             this.isConnected = false;
             this.updateConnectionStatus('disconnected', 'Disconnected');
             this.elements.micButton.disabled = true;
-            
+
             // Attempt to reconnect after 3 seconds
             setTimeout(() => {
                 if (!this.isConnected) {
@@ -134,7 +134,7 @@ class StacyClient {
     updateConnectionStatus(status, text) {
         const statusDot = this.elements.connectionStatus.querySelector('.status-dot');
         const statusText = this.elements.connectionStatus.querySelector('span');
-        
+
         statusDot.className = `status-dot ${status}`;
         statusText.textContent = text;
     }
@@ -144,14 +144,14 @@ class StacyClient {
 
         try {
             // Request microphone access with specific constraints for OpenAI Realtime API
-            this.audioStream = await navigator.mediaDevices.getUserMedia({ 
+            this.audioStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     channelCount: 1, // Mono
                     sampleRate: 24000, // 24kHz as required by OpenAI
                     echoCancellation: true,
                     noiseSuppression: true,
                     autoGainControl: true
-                } 
+                }
             });
 
             // Set up audio processing for PCM16 format
@@ -185,24 +185,24 @@ class StacyClient {
 
             // Create source from stream
             this.sourceNode = this.audioContext.createMediaStreamSource(this.audioStream);
-            
+
             // Create script processor for raw audio data
             this.processorNode = this.audioContext.createScriptProcessor(4096, 1, 1);
-            
+
             this.audioBuffer = [];
-            
+
             this.processorNode.onaudioprocess = (event) => {
                 if (this.isRecording) {
                     const inputBuffer = event.inputBuffer;
                     const inputData = inputBuffer.getChannelData(0);
-                    
+
                     // Convert float32 to int16 (PCM16)
                     const pcm16 = new Int16Array(inputData.length);
                     for (let i = 0; i < inputData.length; i++) {
                         const sample = Math.max(-1, Math.min(1, inputData[i]));
                         pcm16[i] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
                     }
-                    
+
                     this.audioBuffer.push(pcm16);
                 }
             };
@@ -238,12 +238,12 @@ class StacyClient {
                 this.processorNode.disconnect();
                 this.processorNode = null;
             }
-            
+
             if (this.sourceNode) {
                 this.sourceNode.disconnect();
                 this.sourceNode = null;
             }
-            
+
             if (this.audioContext && this.audioContext.state !== 'closed') {
                 this.audioContext.close();
                 this.audioContext = null;
@@ -274,7 +274,7 @@ class StacyClient {
             // Combine all audio chunks into a single buffer
             const totalLength = this.audioBuffer.reduce((sum, chunk) => sum + chunk.length, 0);
             const combinedBuffer = new Int16Array(totalLength);
-            
+
             let offset = 0;
             for (const chunk of this.audioBuffer) {
                 combinedBuffer.set(chunk, offset);
@@ -299,7 +299,7 @@ class StacyClient {
 
             // Clear buffer
             this.audioBuffer = [];
-            
+
             console.log(`Sent ${totalLength} audio samples to server`);
 
         } catch (error) {
@@ -381,7 +381,7 @@ class StacyClient {
 
         const avatar = document.createElement('div');
         avatar.className = `${sender}-avatar`;
-        
+
         if (sender === 'ai') {
             avatar.textContent = '🤖';
         } else if (sender === 'user') {
@@ -418,14 +418,14 @@ class StacyClient {
     handleDistressAnalysis(payload) {
         if (payload) {
             const { distressLevel, detectedKeywords, transcript } = payload;
-            
+
             console.log(`Distress Analysis: ${distressLevel}, Keywords: ${detectedKeywords?.join(', ') || 'none'}`);
-            
+
             // Show transcription
             if (transcript) {
                 this.addMessage('user', `"${transcript}"`);
             }
-            
+
             // Handle distress level
             this.handleDistressLevel(distressLevel);
         }
@@ -443,7 +443,7 @@ class StacyClient {
 
     triggerEmergency() {
         this.showEmergencyModal();
-        
+
         // Send emergency trigger to server
         this.sendMessage({
             type: 'emergency_trigger',
