@@ -2,6 +2,7 @@ import Head from 'next/head';
 import CallForm from '../components/CallForm';
 import AssistantForm from '../components/AssistantForm';
 import ConfigStatus from '../components/ConfigStatus';
+import StacyInterface from '../components/StacyInterface';
 
 export default function Home() {
   const handleCallInitiated = (callId: string) => {
@@ -26,6 +27,7 @@ export default function Home() {
       <div className="container">
         <h1>🎙️ VAPI Voice Agent</h1>
         
+        <StacyInterface />
         <CallForm onCallInitiated={handleCallInitiated} />
         <AssistantForm onAssistantCreated={handleAssistantCreated} />
         <ConfigStatus />
