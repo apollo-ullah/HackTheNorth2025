@@ -1213,6 +1213,30 @@ I can answer questions about the verified information in this case file, but I c
               >
                 🔍 Test APIs
               </button>
+              <button
+                onClick={async () => {
+                  try {
+                    addMessage('system', '🔧 Checking environment variables...');
+                    const response = await axios.get('/api/debug/env');
+                    addMessage('system', `🔧 Environment Status: ${JSON.stringify(response.data.environment, null, 2)}`);
+                  } catch (error: any) {
+                    addMessage('system', `❌ Environment Check Failed: ${error.message}`);
+                  }
+                }}
+                style={{
+                  padding: '10px 16px',
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  border: '1px solid rgba(245, 158, 11, 0.5)',
+                  borderRadius: '20px',
+                  color: '#f59e0b',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                🔧 Check Env
+              </button>
               {!currentLocation && (
                 <button
                   onClick={async () => {

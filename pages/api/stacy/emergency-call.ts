@@ -11,6 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!VAPI_BACKEND_KEY) {
     return res.status(500).json({ error: 'VAPI Backend key not configured' });
   }
+  
+  console.log('📞 VAPI_PHONE_NUMBER_ID available:', !!VAPI_PHONE_NUMBER_ID);
 
   try {
     const { emergency_contact_phone = '+15146605707', case_summary, location } = req.body;
@@ -57,7 +59,7 @@ Start immediately with the briefing.`,
     const result = await vapiClient.makeOutboundCall(
       emergency_contact_phone,
       assistantConfig,
-      VAPI_PHONE_NUMBER_ID
+      VAPI_PHONE_NUMBER_ID || undefined
     );
 
     console.log(`📞 Emergency call successful: ${result.id}`);
