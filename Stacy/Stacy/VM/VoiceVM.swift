@@ -55,31 +55,37 @@ class VoiceVM: ObservableObject {
                     try await self.conversation.updateSession { session in
                         // Set up system prompt for safety assistant
                         session.instructions = """
-                        You are Stacy, a voice-activated safety assistant integrated with a backend AI system.
+                        You are Stacy, a personal safety assistant. Speak in first person and be direct.
                         
-                        IMPORTANT: You work alongside a backend AI system that handles emergency situations, risk assessment, and safety protocols. Your role is to provide voice interaction and navigation assistance.
+                        RESPONSE STYLE:
+                        - Always use "I" statements: "I'm here to help", "I can find safe places", "I'll guide you"
+                        - Be clear and concise: "I'm calling your emergency contact now"
+                        - Avoid vague phrases like "the system will help" or "assistance is available"
                         
-                        WHEN USERS ASK FOR HELP:
-                        1. If they say "I need help" or express feeling unsafe, the backend will handle the emergency assessment
-                        2. If they ask for "directions" or "navigation" to a specific place, then offer navigation assistance
-                        3. If they ask for "safe places" or "where can I go", the backend will find locations and you can help with navigation
+                        WHEN USERS SAY "I NEED HELP":
+                        - Say: "I'm here. Are you in immediate danger right now?"
+                        - Wait for their response before taking action
+                        - Don't automatically start navigation unless they ask for directions
                         
-                        NAVIGATION ACTIVATION:
-                        - Only activate navigation when users explicitly ask for directions or navigation
-                        - Do NOT automatically start navigation when users just say "I need help"
-                        - Wait for the backend to assess the situation and provide appropriate responses
+                        WHEN USERS ASK FOR DIRECTIONS OR NAVIGATION:
+                        - Say: "I'll find the nearest safe place and guide you there"
+                        - Then activate navigation to the closest safe location
                         
-                        NAVIGATION INSTRUCTIONS: When you receive navigation instructions from the app, speak them clearly and helpfully to guide the user. Make them conversational and reassuring. For example:
-                        - "Starting navigation. Turn left onto Main Street in 200 meters."
-                        - "Next: Turn right onto Oak Avenue in 150 meters."
-                        - "Route recalculated. Continue straight for 300 meters."
+                        WHEN USERS ASK FOR SAFE PLACES:
+                        - Say: "I'm searching for nearby safe places now"
+                        - Find locations and offer navigation
                         
-                        EMERGENCY SITUATIONS:
-                        - If the backend indicates an emergency escalation, acknowledge it and provide reassurance
-                        - If emergency contacts are being notified, confirm this to the user
-                        - Stay calm and supportive during emergency situations
+                        EMERGENCY RESPONSES:
+                        - "I'm calling your emergency contact now"
+                        - "I'm connecting you to emergency services"
+                        - "I'm sending your location to emergency contacts"
                         
-                        Be helpful, empathetic, and focused on safety. Keep responses brief and conversational. Let the backend handle emergency protocols while you provide voice interaction and navigation support.
+                        NAVIGATION INSTRUCTIONS: Speak clearly and reassuringly:
+                        - "I'm starting navigation. Turn left in 200 meters"
+                        - "Next: Turn right in 150 meters"
+                        - "I'm recalculating the route"
+                        
+                        Keep responses under 15 words. Be supportive and action-oriented.
                         """
                         
                         // Enable transcription of user's voice messages
@@ -135,30 +141,36 @@ class VoiceVM: ObservableObject {
         }
         
         if needsHelp && !isSearchingPlaces && !waitingForNavigationConfirmation && !hasTriggeredHelpSearch {
-            print("User asked for help, sending to backend for processing")
+            print("🆘 HELP REQUEST DETECTED - Sending to backend for processing")
             hasTriggeredHelpSearch = true
+            print("🔒 HELP SEARCH FLAG SET - Preventing duplicate requests")
             
             // Send to backend for intelligent processing
             Task {
                 await processUserMessageWithBackend(transcript)
             }
         } else if needsHelp && hasTriggeredHelpSearch {
-            print("Help already triggered, ignoring additional help requests")
+            print("⏸️ HELP ALREADY TRIGGERED - Ignoring additional help requests")
         }
     }
     
     private func processUserMessageWithBackend(_ message: String) async {
+        print("📤 SENDING MESSAGE TO BACKEND:")
+        print("   Message: '\(message)'")
+        print("   Session ID: '\(currentSessionId)'")
+        
         guard let locationManager = locationManager,
               let location = locationManager.location else {
-            print("Location not available for backend processing")
+            print("❌ BACKEND PROCESSING - Location not available")
             return
         }
         
         guard let stacyAPIService = stacyAPIService else {
-            print("Stacy API service not available")
+            print("❌ BACKEND PROCESSING - Stacy API service not available")
             return
         }
         
+        print("✅ BACKEND PROCESSING - Sending to backend...")
         let result = await stacyAPIService.sendChatMessage(
             message: message,
             location: location,
@@ -169,9 +181,10 @@ class VoiceVM: ObservableObject {
         await MainActor.run {
             switch result {
             case .success(let response):
+                print("✅ BACKEND PROCESSING - Success, handling response")
                 handleBackendResponse(response)
             case .failure(let error):
-                print("Backend processing failed: \(error.localizedDescription)")
+                print("❌ BACKEND PROCESSING - Failed: \(error.localizedDescription)")
                 // Fallback to local processing
                 fallbackToLocalProcessing(message)
             }
@@ -179,27 +192,49 @@ class VoiceVM: ObservableObject {
     }
     
     private func handleBackendResponse(_ response: ChatResponse) {
+        print("🤖 HANDLING BACKEND RESPONSE:")
+        print("   Reply: '\(response.reply)'")
+        print("   Action: '\(response.action ?? "none")'")
+        print("   Risk Level: '\(response.riskLevel ?? "none")'")
+        
         // Update UI with Stacy's response
         self.lastLLMResponse = response.reply
         
+        // Reset help search flag since we've processed the response
+        print("🔄 RESETTING HELP SEARCH FLAG - User can now make new help requests")
+        self.hasTriggeredHelpSearch = false
+        
         // Handle specific actions from backend
         if let action = response.action {
+            print("🎯 BACKEND ACTION: \(action)")
             switch action {
             case "escalate_to_police":
+                print("🚨 ESCALATING TO POLICE")
                 handlePoliceEscalation(response)
             case "safe_locations_found":
+                print("📍 SAFE LOCATIONS FOUND")
                 handleSafeLocationsFound(response)
             case "offer_escalation", "offer_dispatcher":
+                print("📞 OFFERING ESCALATION")
                 // Backend is handling the escalation, just show the response
                 break
+            case "assess_immediate_danger":
+                print("⚠️ ASSESSING IMMEDIATE DANGER")
+                // Backend is asking for more information, just show the response
+                // Don't trigger additional actions, let user respond
+                break
             default:
-                print("Unknown action from backend: \(action)")
+                print("❓ UNKNOWN ACTION: \(action)")
             }
         }
         
         // Check if we should trigger navigation based on user intent
+        print("🧭 CHECKING IF SHOULD TRIGGER NAVIGATION...")
         if shouldTriggerNavigation(response) {
+            print("✅ TRIGGERING NAVIGATION - Calling searchNearbyPlacesAutomatically()")
             searchNearbyPlacesAutomatically()
+        } else {
+            print("❌ NOT TRIGGERING NAVIGATION")
         }
     }
     
@@ -207,19 +242,31 @@ class VoiceVM: ObservableObject {
         let reply = response.reply.lowercased()
         let transcript = self.transcript.lowercased()
         
+        print("🧭 NAVIGATION CHECK:")
+        print("   User transcript: '\(transcript)'")
+        print("   Stacy reply: '\(reply)'")
+        
         // Only trigger navigation if user explicitly asks for directions/navigation
         let navigationKeywords = [
             "directions", "navigate", "navigation", "how to get there",
-            "show me the way", "guide me", "take me to"
+            "show me the way", "guide me", "take me to", "get me to",
+            "walk to", "go to", "lead me", "help me get to"
         ]
         
         let userWantsNavigation = navigationKeywords.contains { keyword in
             transcript.contains(keyword)
         }
         
-        let stacyOffersNavigation = reply.contains("navigate") || reply.contains("directions")
+        let stacyOffersNavigation = reply.contains("navigate") || reply.contains("directions") || reply.contains("guide you")
         
-        return userWantsNavigation || stacyOffersNavigation
+        print("   User wants navigation: \(userWantsNavigation)")
+        print("   Stacy offers navigation: \(stacyOffersNavigation)")
+        print("   Navigation keywords found: \(navigationKeywords.filter { transcript.contains($0) })")
+        
+        let shouldNavigate = userWantsNavigation || stacyOffersNavigation
+        print("   🧭 FINAL DECISION: \(shouldNavigate ? "STARTING NAVIGATION" : "NOT STARTING NAVIGATION")")
+        
+        return shouldNavigate
     }
     
     private func handlePoliceEscalation(_ response: ChatResponse) {
@@ -388,11 +435,20 @@ class VoiceVM: ObservableObject {
     // MARK: - Places Search Integration
     
     func searchNearbyPlacesAutomatically() {
+        print("🔍 SEARCHING FOR PLACES - Function called")
+        
         guard let locationManager = locationManager,
               let placesService = placesService,
               let location = locationManager.location else {
+            print("❌ SEARCHING FOR PLACES - Missing required services:")
+            print("   LocationManager: \(locationManager != nil)")
+            print("   PlacesService: \(placesService != nil)")
+            print("   Location: \(locationManager?.location != nil)")
             return
         }
+        
+        print("✅ SEARCHING FOR PLACES - All services available")
+        print("   Current location: \(location.coordinate)")
         
         // Don't stop the LLM - let it continue the conversation
         
@@ -400,20 +456,30 @@ class VoiceVM: ObservableObject {
         isProvidingPlacesResponse = true
         statusText = "Searching for nearby safe places..."
         
+        print("🔍 SEARCHING FOR PLACES - Starting search...")
         placesService.searchNearbyPlaces(at: location)
         
         // Monitor the places service for results
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            print("🔍 SEARCHING FOR PLACES - Checking results after 2 seconds...")
             self.handlePlacesSearchResults()
         }
     }
     
     private func handlePlacesSearchResults() {
-        guard let placesService = placesService else { return }
+        print("🔍 HANDLING PLACES SEARCH RESULTS")
+        
+        guard let placesService = placesService else { 
+            print("❌ HANDLING PLACES SEARCH RESULTS - No places service")
+            return 
+        }
         
         isSearchingPlaces = false
         
+        print("🔍 HANDLING PLACES SEARCH RESULTS - Found \(placesService.places.count) places")
+        
         if placesService.places.isEmpty {
+            print("❌ HANDLING PLACES SEARCH RESULTS - No places found")
             let errorMessage = "I couldn't find any nearby safe places. Please try again or check your location services."
             sendMessageToLLM("No nearby safe places were found. Please inform the user and suggest they try again or check their location services.")
             return
@@ -422,6 +488,10 @@ class VoiceVM: ObservableObject {
         foundPlaces = placesService.places
         let nearestPlace = placesService.places.first!
         suggestedPlace = nearestPlace
+        
+        print("✅ HANDLING PLACES SEARCH RESULTS - Nearest place: \(nearestPlace.name)")
+        print("   Distance: \(nearestPlace.distance)m")
+        print("   Address: \(nearestPlace.address)")
         
         let distanceText = formatDistance(nearestPlace.distance)
         
@@ -438,6 +508,8 @@ class VoiceVM: ObservableObject {
         sendMessageToLLM(placesInfo)
         
         waitingForNavigationConfirmation = true
+        
+        print("🧭 HANDLING PLACES SEARCH RESULTS - Waiting for navigation confirmation")
         
         // Also update the status text to show what we found
         statusText = "Found \(placesService.places.count) nearby places"

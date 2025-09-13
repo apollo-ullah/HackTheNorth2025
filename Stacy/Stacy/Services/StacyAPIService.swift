@@ -1,6 +1,89 @@
 import Foundation
 import CoreLocation
 
+// MARK: - Request Models
+struct CaseFileUpdateRequest: Codable {
+    let caseId: String
+    let updates: [String: String]
+}
+
+struct EmergencyContactRequest: Codable {
+    let contact: EmergencyContact
+    let message: String
+}
+
+struct SafeLocationsRequest: Codable {
+    let location: LocationData
+    let radius: Int
+}
+
+struct SMSRequest: Codable {
+    let phoneNumber: String
+    let message: String
+}
+
+struct RiskAssessmentRequest: Codable {
+    let message: String
+    let location: LocationData?
+}
+
+struct VoiceRequest: Codable {
+    let text: String
+    let voice: String
+}
+
+struct EmergencyCallRequest: Codable {
+    let contacts: [EmergencyContact]
+    let message: String
+}
+
+struct MobileActionRequest: Codable {
+    let action: String
+    let data: [String: String]
+}
+
+struct ChatRequest: Codable {
+    let message: String
+    let location: LocationData?
+    let sessionId: String
+    let mode: String
+}
+
+struct EmergencyRequest: Codable {
+    let action: String
+    let data: EmergencyData
+}
+
+struct EmergencyData: Codable {
+    let caseId: String?
+    let updates: [String: String]?
+    let contact: EmergencyContact?
+    let caseFile: CaseFile?
+    let message: String?
+    let location: LocationData?
+    let radius: Int?
+    let phoneNumber: String?
+    let contacts: [EmergencyContact]?
+    let briefingScript: String?
+}
+
+struct VoiceCallRequest: Codable {
+    let phone_number: String
+    let user_location: LocationData?
+    let emergency_contacts: [EmergencyContact]
+    let conversation_context: ConversationContext?
+}
+
+struct MobileRequest: Codable {
+    let action: String
+    let message: String?
+    let location: LocationData?
+    let type: String?
+    let emergency_contact: EmergencyContact?
+    let contact_phone: String?
+    let code_word: String?
+}
+
 // MARK: - Data Models
 struct CaseFile: Codable {
     let id: String
@@ -174,112 +257,175 @@ class StacyAPIService: ObservableObject {
     
     // MARK: - Emergency API Calls
     
-    func updateCaseFile(caseId: String, updates: [String: Any]) async -> Result<CaseFile, Error> {
-        return await makeRequest(
-            endpoint: "/emergency",
-            method: "POST",
-            body: [
-                "action": "update_casefile",
-                "data": [
-                    "caseId": caseId,
-                    "updates": updates
-                ]
-            ]
+    func updateCaseFile(caseId: String, updates: [String: String]) async -> Result<CaseFile, Error> {
+        let data = EmergencyData(
+            caseId: caseId,
+            updates: updates,
+            contact: nil,
+            caseFile: nil,
+            message: nil,
+            location: nil,
+            radius: nil,
+            phoneNumber: nil,
+            contacts: nil,
+            briefingScript: nil
         )
+        let request = EmergencyRequest(action: "update_casefile", data: data)
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<CaseFile>(endpoint: "/emergency", method: "POST", body: requestData)
+        } catch {
+            return .failure(error)
+        }
     }
     
     func notifyEmergencyContact(contact: EmergencyContact, caseFile: CaseFile, message: String) async -> Result<SMSResponse, Error> {
-        return await makeRequest(
-            endpoint: "/emergency",
-            method: "POST",
-            body: [
-                "action": "notify_emergency_contact",
-                "data": [
-                    "contact": contact,
-                    "caseFile": caseFile,
-                    "message": message
-                ]
-            ]
+        let data = EmergencyData(
+            caseId: nil,
+            updates: nil,
+            contact: contact,
+            caseFile: caseFile,
+            message: message,
+            location: nil,
+            radius: nil,
+            phoneNumber: nil,
+            contacts: nil,
+            briefingScript: nil
         )
+        let request = EmergencyRequest(action: "notify_emergency_contact", data: data)
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<SMSResponse>(endpoint: "/emergency", method: "POST", body: requestData)
+        } catch {
+            return .failure(error)
+        }
     }
     
     func callDemoEmergency(caseFile: CaseFile, briefingScript: String) async -> Result<VoiceCallResponse, Error> {
-        return await makeRequest(
-            endpoint: "/emergency",
-            method: "POST",
-            body: [
-                "action": "call_demo_emergency",
-                "data": [
-                    "caseFile": caseFile,
-                    "briefingScript": briefingScript
-                ]
-            ]
+        let data = EmergencyData(
+            caseId: nil,
+            updates: nil,
+            contact: nil,
+            caseFile: caseFile,
+            message: nil,
+            location: nil,
+            radius: nil,
+            phoneNumber: nil,
+            contacts: nil,
+            briefingScript: briefingScript
         )
+        let request = EmergencyRequest(action: "call_demo_emergency", data: data)
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<VoiceCallResponse>(endpoint: "/emergency", method: "POST", body: requestData)
+        } catch {
+            return .failure(error)
+        }
     }
     
     func getSafeLocations(location: CLLocation, radius: Double = 5000) async -> Result<[SafeLocation], Error> {
-        let result: Result<SafeLocationsResponse, Error> = await makeRequest(
-            endpoint: "/emergency",
-            method: "POST",
-            body: [
-                "action": "get_safe_locations",
-                "data": [
-                    "location": [
-                        "lat": location.coordinate.latitude,
-                        "lng": location.coordinate.longitude
-                    ],
-                    "radius": radius
-                ]
-            ]
+        let locationData = LocationData(
+            lat: location.coordinate.latitude,
+            lng: location.coordinate.longitude,
+            accuracy: location.horizontalAccuracy,
+            address: nil
         )
         
-        switch result {
-        case .success(let response):
-            return .success(response.safeLocations)
-        case .failure(let error):
+        let data = EmergencyData(
+            caseId: nil,
+            updates: nil,
+            contact: nil,
+            caseFile: nil,
+            message: nil,
+            location: locationData,
+            radius: Int(radius),
+            phoneNumber: nil,
+            contacts: nil,
+            briefingScript: nil
+        )
+        let request = EmergencyRequest(action: "get_safe_locations", data: data)
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            let result: Result<SafeLocationsResponse, Error> = await makeRequest(
+                endpoint: "/emergency",
+                method: "POST",
+                body: requestData
+            )
+        
+            switch result {
+            case .success(let response):
+                return .success(response.safeLocations)
+            case .failure(let error):
+                return .failure(error)
+            }
+        } catch {
             return .failure(error)
         }
     }
     
     func sendContactSMS(phoneNumber: String, message: String, location: CLLocation?) async -> Result<SMSResponse, Error> {
-        var data: [String: Any] = [
-            "phoneNumber": phoneNumber,
-            "message": message
-        ]
-        
+        let locationData: LocationData?
         if let location = location {
-            data["location"] = [
-                "lat": location.coordinate.latitude,
-                "lng": location.coordinate.longitude
-            ]
+            locationData = LocationData(
+                lat: location.coordinate.latitude,
+                lng: location.coordinate.longitude,
+                accuracy: location.horizontalAccuracy,
+                address: nil
+            )
+        } else {
+            locationData = nil
         }
         
-        return await makeRequest(
-            endpoint: "/emergency",
-            method: "POST",
-            body: [
-                "action": "send_contact_sms",
-                "data": data
-            ]
+        let data = EmergencyData(
+            caseId: nil,
+            updates: nil,
+            contact: nil,
+            caseFile: nil,
+            message: message,
+            location: locationData,
+            radius: nil,
+            phoneNumber: phoneNumber,
+            contacts: nil,
+            briefingScript: nil
         )
+        let request = EmergencyRequest(action: "send_contact_sms", data: data)
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<SMSResponse>(endpoint: "/emergency", method: "POST", body: requestData)
+        } catch {
+            return .failure(error)
+        }
     }
     
     func assessRisk(message: String) async -> Result<String, Error> {
-        let result: Result<RiskAssessmentResponse, Error> = await makeRequest(
-            endpoint: "/emergency",
-            method: "POST",
-            body: [
-                "action": "assess_risk",
-                "data": [
-                    "message": message
-                ]
-            ]
+        let data = EmergencyData(
+            caseId: nil,
+            updates: nil,
+            contact: nil,
+            caseFile: nil,
+            message: message,
+            location: nil,
+            radius: nil,
+            phoneNumber: nil,
+            contacts: nil,
+            briefingScript: nil
         )
+        let request = EmergencyRequest(action: "assess_risk", data: data)
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            let result: Result<RiskAssessmentResponse, Error> = await makeRequest(
+                endpoint: "/emergency",
+                method: "POST",
+                body: requestData
+            )
         
-        switch result {
-        case .success(let response):
-            return .success(response.riskLevel)
-        case .failure(let error):
+            switch result {
+            case .success(let response):
+                return .success(response.riskLevel)
+            case .failure(let error):
+                return .failure(error)
+            }
+        } catch {
             return .failure(error)
         }
     }
@@ -287,23 +433,26 @@ class StacyAPIService: ObservableObject {
     // MARK: - Voice API Calls
     
     func generateVoice(text: String, voice: String = "nova") async -> Result<Data, Error> {
-        let result: Result<VoiceResponse, Error> = await makeRequest(
-            endpoint: "/voice",
-            method: "POST",
-            body: [
-                "text": text,
-                "voice": voice
-            ]
-        )
+        let request = VoiceRequest(text: text, voice: voice)
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            let result: Result<VoiceResponse, Error> = await makeRequest(
+                endpoint: "/voice",
+                method: "POST",
+                body: requestData
+            )
         
-        switch result {
-        case .success(let response):
-            if let audioData = Data(base64Encoded: response.audio) {
-                return .success(audioData)
-            } else {
-                return .failure(APIError.serverError("Failed to decode audio data"))
+            switch result {
+            case .success(let response):
+                if let audioData = Data(base64Encoded: response.audio) {
+                    return .success(audioData)
+                } else {
+                    return .failure(APIError.serverError("Failed to decode audio data"))
+                }
+            case .failure(let error):
+                return .failure(error)
             }
-        case .failure(let error):
+        } catch {
             return .failure(error)
         }
     }
@@ -311,134 +460,201 @@ class StacyAPIService: ObservableObject {
     // MARK: - Voice Call API
     
     func callEmergencyDispatch(phoneNumber: String, userLocation: CLLocation?, emergencyContacts: [EmergencyContact], conversationContext: ConversationContext?) async -> Result<VoiceCallResponse, Error> {
-        var body: [String: Any] = [
-            "phone_number": phoneNumber
-        ]
-        
+        let locationData: LocationData?
         if let location = userLocation {
-            body["user_location"] = [
-                "lat": location.coordinate.latitude,
-                "lng": location.coordinate.longitude,
-                "accuracy": location.horizontalAccuracy
-            ]
+            locationData = LocationData(
+                lat: location.coordinate.latitude,
+                lng: location.coordinate.longitude,
+                accuracy: location.horizontalAccuracy,
+                address: nil
+            )
+        } else {
+            locationData = nil
         }
         
-        if let contacts = emergencyContacts as [Any]? {
-            body["emergency_contacts"] = contacts
-        }
-        
-        if let context = conversationContext {
-            body["conversation_context"] = context
-        }
-        
-        return await makeRequest(
-            endpoint: "/voice-call",
-            method: "POST",
-            body: body
+        let request = VoiceCallRequest(
+            phone_number: phoneNumber,
+            user_location: locationData,
+            emergency_contacts: emergencyContacts,
+            conversation_context: conversationContext
         )
+        
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<VoiceCallResponse>(
+                endpoint: "/voice-call",
+                method: "POST",
+                body: requestData
+            )
+        } catch {
+            return .failure(error)
+        }
     }
     
     // MARK: - Mobile API Calls
     
     func quickAlert(location: CLLocation, message: String, emergencyContact: EmergencyContact) async -> Result<SMSResponse, Error> {
-        return await makeRequest(
-            endpoint: "/mobile",
-            method: "POST",
-            body: [
-                "action": "quick_alert",
-                "location": [
-                    "lat": location.coordinate.latitude,
-                    "lng": location.coordinate.longitude
-                ],
-                "message": message,
-                "emergency_contact": emergencyContact
-            ]
+        let locationData = LocationData(
+            lat: location.coordinate.latitude,
+            lng: location.coordinate.longitude,
+            accuracy: location.horizontalAccuracy,
+            address: nil
         )
+        
+        let request = MobileRequest(
+            action: "quick_alert",
+            message: message,
+            location: locationData,
+            type: nil,
+            emergency_contact: emergencyContact,
+            contact_phone: nil,
+            code_word: nil
+        )
+        
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<SMSResponse>(
+                endpoint: "/mobile",
+                method: "POST",
+                body: requestData
+            )
+        } catch {
+            return .failure(error)
+        }
     }
     
     func checkIn(message: String, location: CLLocation?) async -> Result<MobileAPIResponse, Error> {
-        var body: [String: Any] = [
-            "action": "check_in",
-            "message": message
-        ]
-        
+        let locationData: LocationData?
         if let location = location {
-            body["location"] = [
-                "lat": location.coordinate.latitude,
-                "lng": location.coordinate.longitude
-            ]
+            locationData = LocationData(
+                lat: location.coordinate.latitude,
+                lng: location.coordinate.longitude,
+                accuracy: location.horizontalAccuracy,
+                address: nil
+            )
+        } else {
+            locationData = nil
         }
         
-        return await makeRequest(
-            endpoint: "/mobile",
-            method: "POST",
-            body: body
+        let request = MobileRequest(
+            action: "check_in",
+            message: message,
+            location: locationData,
+            type: nil,
+            emergency_contact: nil,
+            contact_phone: nil,
+            code_word: nil
         )
+        
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<MobileAPIResponse>(
+                endpoint: "/mobile",
+                method: "POST",
+                body: requestData
+            )
+        } catch {
+            return .failure(error)
+        }
     }
     
     func findHelp(location: CLLocation, type: String? = nil) async -> Result<MobileAPIResponse, Error> {
-        var body: [String: Any] = [
-            "action": "find_help",
-            "location": [
-                "lat": location.coordinate.latitude,
-                "lng": location.coordinate.longitude
-            ]
-        ]
-        
-        if let type = type {
-            body["type"] = type
-        }
-        
-        return await makeRequest(
-            endpoint: "/mobile",
-            method: "POST",
-            body: body
+        let locationData = LocationData(
+            lat: location.coordinate.latitude,
+            lng: location.coordinate.longitude,
+            accuracy: location.horizontalAccuracy,
+            address: nil
         )
+        
+        let request = MobileRequest(
+            action: "find_help",
+            message: nil,
+            location: locationData,
+            type: type,
+            emergency_contact: nil,
+            contact_phone: nil,
+            code_word: nil
+        )
+        
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<MobileAPIResponse>(
+                endpoint: "/mobile",
+                method: "POST",
+                body: requestData
+            )
+        } catch {
+            return .failure(error)
+        }
     }
     
     func stealthMode(contactPhone: String, codeWord: String, location: CLLocation) async -> Result<SMSResponse, Error> {
-        return await makeRequest(
-            endpoint: "/mobile",
-            method: "POST",
-            body: [
-                "action": "stealth_mode",
-                "contact_phone": contactPhone,
-                "code_word": codeWord,
-                "location": [
-                    "lat": location.coordinate.latitude,
-                    "lng": location.coordinate.longitude
-                ]
-            ]
+        let locationData = LocationData(
+            lat: location.coordinate.latitude,
+            lng: location.coordinate.longitude,
+            accuracy: location.horizontalAccuracy,
+            address: nil
         )
+        
+        let request = MobileRequest(
+            action: "stealth_mode",
+            message: nil,
+            location: locationData,
+            type: nil,
+            emergency_contact: nil,
+            contact_phone: contactPhone,
+            code_word: codeWord
+        )
+        
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<SMSResponse>(
+                endpoint: "/mobile",
+                method: "POST",
+                body: requestData
+            )
+        } catch {
+            return .failure(error)
+        }
     }
     
     // MARK: - Chat API
     
     func sendChatMessage(message: String, location: CLLocation?, sessionId: String, mode: String = "voice") async -> Result<ChatResponse, Error> {
-        var body: [String: Any] = [
-            "message": message,
-            "sessionId": sessionId,
-            "mode": mode
-        ]
-        
+        let locationData: LocationData?
         if let location = location {
-            body["location"] = [
-                "lat": location.coordinate.latitude,
-                "lng": location.coordinate.longitude,
-                "accuracy": location.horizontalAccuracy
-            ]
+            locationData = LocationData(
+                lat: location.coordinate.latitude,
+                lng: location.coordinate.longitude,
+                accuracy: location.horizontalAccuracy,
+                address: nil
+            )
+        } else {
+            locationData = nil
         }
         
-        return await makeRequest(
-            endpoint: "/chat",
-            method: "POST",
-            body: body
+        let request = ChatRequest(
+            message: message,
+            location: locationData,
+            sessionId: sessionId,
+            mode: mode
         )
+        
+        do {
+            let requestData = try JSONEncoder().encode(request)
+            return await makeRequest<ChatResponse>(
+                endpoint: "/chat",
+                method: "POST",
+                body: requestData
+            )
+        } catch {
+            return .failure(error)
+        }
     }
     
     // MARK: - Generic Request Method
     
-    private func makeRequest<T: Codable>(endpoint: String, method: String, body: [String: Any]) async -> Result<T, Error> {
+    private func makeRequest<T: Codable>(endpoint: String, method: String, body: Data?) async -> Result<T, Error> {
         await MainActor.run {
             isLoading = true
             errorMessage = nil
@@ -456,14 +672,8 @@ class StacyAPIService: ObservableObject {
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        } catch {
-            await MainActor.run {
-                isLoading = false
-                errorMessage = "Failed to encode request body"
-            }
-            return .failure(error)
+        if let body = body {
+            request.httpBody = body
         }
         
         do {
