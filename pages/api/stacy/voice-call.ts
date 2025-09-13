@@ -44,14 +44,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { VAPI_BACKEND_KEY, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_NUMBER } = process.env;
+  const { VAPI_BACKEND_KEY, VAPI_PHONE_NUMBER_ID, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_NUMBER } = process.env;
 
   if (!VAPI_BACKEND_KEY) {
     return res.status(500).json({ error: 'VAPI Backend key not configured' });
   }
 
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_NUMBER) {
-    return res.status(500).json({ error: 'Twilio credentials not fully configured' });
+  // Check if we have either VAPI phone number ID OR Twilio credentials
+  const hasVapiPhone = !!VAPI_PHONE_NUMBER_ID;
+  const hasTwilioConfig = !!(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_NUMBER);
+  
+  if (!hasVapiPhone && !hasTwilioConfig) {
+    return res.status(500).json({ 
+      error: 'Either VAPI_PHONE_NUMBER_ID or Twilio credentials must be configured',
+      debug: { hasVapiPhone, hasTwilioConfig }
+    });
   }
 
   const { phone_number, user_location, emergency_contacts, conversation_context } = req.body;
@@ -67,12 +74,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('📞 Conversation context:', conversation_context);
     console.log('📞 VAPI_PHONE_NUMBER_ID:', VAPI_PHONE_NUMBER_ID);
     console.log('📞 TWILIO_NUMBER:', TWILIO_NUMBER);
+    console.log('📞 Using VAPI Phone ID:', hasVapiPhone);
+    console.log('📞 Using Twilio Config:', hasTwilioConfig);
 
-    const vapiClient = new VAPIClient(VAPI_BACKEND_KEY, {
-      accountSid: TWILIO_ACCOUNT_SID,
-      authToken: TWILIO_AUTH_TOKEN,
-      phoneNumber: TWILIO_NUMBER,
-    });
+    const vapiClient = hasTwilioConfig ? 
+      new VAPIClient(VAPI_BACKEND_KEY, {
+        accountSid: TWILIO_ACCOUNT_SID!,
+        authToken: TWILIO_AUTH_TOKEN!,
+        phoneNumber: TWILIO_NUMBER!,
+      }) : 
+      new VAPIClient(VAPI_BACKEND_KEY);
 
     // Create comprehensive dispatcher briefing
     const briefingScript = createDispatcherBriefing(conversation_context, user_location, emergency_contacts || []);
@@ -104,12 +115,10 @@ This is a real emergency situation. Be professional and efficient.`,
       first_message: briefingScript
     };
 
-    const phoneNumberId = process.env.VAPI_PHONE_NUMBER_ID;
-    
     const result = await vapiClient.makeOutboundCall(
       phone_number,
       assistantConfig,
-      phoneNumberId
+      hasVapiPhone ? VAPI_PHONE_NUMBER_ID : undefined
     );
 
     // Generate unique case ID for this call
