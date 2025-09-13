@@ -1,0 +1,593 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		05EE00042E6D1F5B00E00E6F /* OpenAIRealtime in Frameworks */ = {isa = PBXBuildFile; productRef = 05EE00032E6D1F5B00E00E6F /* OpenAIRealtime */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		05EEFE9B2E6A8FAC00E00E6F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 05EEFE852E6A8FAB00E00E6F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 05EEFE8C2E6A8FAB00E00E6F;
+			remoteInfo = Stacy;
+		};
+		05EEFEA52E6A8FAC00E00E6F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 05EEFE852E6A8FAB00E00E6F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 05EEFE8C2E6A8FAB00E00E6F;
+			remoteInfo = Stacy;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		05EEFE8D2E6A8FAB00E00E6F /* Stacy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stacy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		05EEFE9A2E6A8FAC00E00E6F /* StacyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StacyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		05EEFEA42E6A8FAC00E00E6F /* StacyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StacyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		05EEFE8F2E6A8FAB00E00E6F /* Stacy */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Stacy;
+			sourceTree = "<group>";
+		};
+		05EEFE9D2E6A8FAC00E00E6F /* StacyTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = StacyTests;
+			sourceTree = "<group>";
+		};
+		05EEFEA72E6A8FAC00E00E6F /* StacyUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = StacyUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		05EEFE8A2E6A8FAB00E00E6F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				05EE00042E6D1F5B00E00E6F /* OpenAIRealtime in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		05EEFE972E6A8FAC00E00E6F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		05EEFEA12E6A8FAC00E00E6F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		05EEFE842E6A8FAB00E00E6F = {
+			isa = PBXGroup;
+			children = (
+				05EEFE8F2E6A8FAB00E00E6F /* Stacy */,
+				05EEFE9D2E6A8FAC00E00E6F /* StacyTests */,
+				05EEFEA72E6A8FAC00E00E6F /* StacyUITests */,
+				05EEFE8E2E6A8FAB00E00E6F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		05EEFE8E2E6A8FAB00E00E6F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				05EEFE8D2E6A8FAB00E00E6F /* Stacy.app */,
+				05EEFE9A2E6A8FAC00E00E6F /* StacyTests.xctest */,
+				05EEFEA42E6A8FAC00E00E6F /* StacyUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		05EEFE8C2E6A8FAB00E00E6F /* Stacy */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 05EEFEAE2E6A8FAC00E00E6F /* Build configuration list for PBXNativeTarget "Stacy" */;
+			buildPhases = (
+				05EEFE892E6A8FAB00E00E6F /* Sources */,
+				05EEFE8A2E6A8FAB00E00E6F /* Frameworks */,
+				05EEFE8B2E6A8FAB00E00E6F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				05EEFE8F2E6A8FAB00E00E6F /* Stacy */,
+			);
+			name = Stacy;
+			packageProductDependencies = (
+				05EE00032E6D1F5B00E00E6F /* OpenAIRealtime */,
+			);
+			productName = Stacy;
+			productReference = 05EEFE8D2E6A8FAB00E00E6F /* Stacy.app */;
+			productType = "com.apple.product-type.application";
+		};
+		05EEFE992E6A8FAC00E00E6F /* StacyTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 05EEFEB12E6A8FAC00E00E6F /* Build configuration list for PBXNativeTarget "StacyTests" */;
+			buildPhases = (
+				05EEFE962E6A8FAC00E00E6F /* Sources */,
+				05EEFE972E6A8FAC00E00E6F /* Frameworks */,
+				05EEFE982E6A8FAC00E00E6F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				05EEFE9C2E6A8FAC00E00E6F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				05EEFE9D2E6A8FAC00E00E6F /* StacyTests */,
+			);
+			name = StacyTests;
+			packageProductDependencies = (
+			);
+			productName = StacyTests;
+			productReference = 05EEFE9A2E6A8FAC00E00E6F /* StacyTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		05EEFEA32E6A8FAC00E00E6F /* StacyUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 05EEFEB42E6A8FAC00E00E6F /* Build configuration list for PBXNativeTarget "StacyUITests" */;
+			buildPhases = (
+				05EEFEA02E6A8FAC00E00E6F /* Sources */,
+				05EEFEA12E6A8FAC00E00E6F /* Frameworks */,
+				05EEFEA22E6A8FAC00E00E6F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				05EEFEA62E6A8FAC00E00E6F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				05EEFEA72E6A8FAC00E00E6F /* StacyUITests */,
+			);
+			name = StacyUITests;
+			packageProductDependencies = (
+			);
+			productName = StacyUITests;
+			productReference = 05EEFEA42E6A8FAC00E00E6F /* StacyUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		05EEFE852E6A8FAB00E00E6F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					05EEFE8C2E6A8FAB00E00E6F = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					05EEFE992E6A8FAC00E00E6F = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 05EEFE8C2E6A8FAB00E00E6F;
+					};
+					05EEFEA32E6A8FAC00E00E6F = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 05EEFE8C2E6A8FAB00E00E6F;
+					};
+				};
+			};
+			buildConfigurationList = 05EEFE882E6A8FAB00E00E6F /* Build configuration list for PBXProject "Stacy" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 05EEFE842E6A8FAB00E00E6F;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				05EE00022E6D1F5B00E00E6F /* XCRemoteSwiftPackageReference "swift-realtime-openai" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 05EEFE8E2E6A8FAB00E00E6F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				05EEFE8C2E6A8FAB00E00E6F /* Stacy */,
+				05EEFE992E6A8FAC00E00E6F /* StacyTests */,
+				05EEFEA32E6A8FAC00E00E6F /* StacyUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		05EEFE8B2E6A8FAB00E00E6F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		05EEFE982E6A8FAC00E00E6F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		05EEFEA22E6A8FAC00E00E6F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		05EEFE892E6A8FAB00E00E6F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		05EEFE962E6A8FAC00E00E6F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		05EEFEA02E6A8FAC00E00E6F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		05EEFE9C2E6A8FAC00E00E6F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 05EEFE8C2E6A8FAB00E00E6F /* Stacy */;
+			targetProxy = 05EEFE9B2E6A8FAC00E00E6F /* PBXContainerItemProxy */;
+		};
+		05EEFEA62E6A8FAC00E00E6F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 05EEFE8C2E6A8FAB00E00E6F /* Stacy */;
+			targetProxy = 05EEFEA52E6A8FAC00E00E6F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		05EEFEAC2E6A8FAC00E00E6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		05EEFEAD2E6A8FAC00E00E6F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		05EEFEAF2E6A8FAC00E00E6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U864964B3Y;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs location access to find nearby safe places and provide navigation assistance.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to find nearby safe places and provide navigation assistance.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs access to the microphone for voice input.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "This app needs access to speech recognition to process your voice commands.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.htn.stacy.Stacy;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		05EEFEB02E6A8FAC00E00E6F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U864964B3Y;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs location access to find nearby safe places and provide navigation assistance.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to find nearby safe places and provide navigation assistance.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs access to the microphone for voice input.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "This app needs access to speech recognition to process your voice commands.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.htn.stacy.Stacy;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		05EEFEB22E6A8FAC00E00E6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.htn.stacy.StacyTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stacy.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Stacy";
+			};
+			name = Debug;
+		};
+		05EEFEB32E6A8FAC00E00E6F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.htn.stacy.StacyTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stacy.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Stacy";
+			};
+			name = Release;
+		};
+		05EEFEB52E6A8FAC00E00E6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.htn.stacy.StacyUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Stacy;
+			};
+			name = Debug;
+		};
+		05EEFEB62E6A8FAC00E00E6F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.htn.stacy.StacyUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Stacy;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		05EEFE882E6A8FAB00E00E6F /* Build configuration list for PBXProject "Stacy" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				05EEFEAC2E6A8FAC00E00E6F /* Debug */,
+				05EEFEAD2E6A8FAC00E00E6F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		05EEFEAE2E6A8FAC00E00E6F /* Build configuration list for PBXNativeTarget "Stacy" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				05EEFEAF2E6A8FAC00E00E6F /* Debug */,
+				05EEFEB02E6A8FAC00E00E6F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		05EEFEB12E6A8FAC00E00E6F /* Build configuration list for PBXNativeTarget "StacyTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				05EEFEB22E6A8FAC00E00E6F /* Debug */,
+				05EEFEB32E6A8FAC00E00E6F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		05EEFEB42E6A8FAC00E00E6F /* Build configuration list for PBXNativeTarget "StacyUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				05EEFEB52E6A8FAC00E00E6F /* Debug */,
+				05EEFEB62E6A8FAC00E00E6F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		05EE00022E6D1F5B00E00E6F /* XCRemoteSwiftPackageReference "swift-realtime-openai" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/m1guelpf/swift-realtime-openai.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		05EE00032E6D1F5B00E00E6F /* OpenAIRealtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05EE00022E6D1F5B00E00E6F /* XCRemoteSwiftPackageReference "swift-realtime-openai" */;
+			productName = OpenAIRealtime;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 05EEFE852E6A8FAB00E00E6F /* Project object */;
+}
