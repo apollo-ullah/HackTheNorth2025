@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Build conversation context
-    const conversationHistory = messages.slice(-10).map(m => ({
+    const conversationHistory = (messages || []).slice(-10).map(m => ({
       role: m.role as 'user' | 'assistant' | 'system',
       content: m.content
     }));

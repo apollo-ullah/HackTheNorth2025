@@ -34,13 +34,16 @@ class VoiceVM: ObservableObject {
     
     // Flag to control when we override LLM responses
     private var isProvidingPlacesResponse = false
-    private var hasTriggeredHelpSearch = false
+    private var isProcessingEmergency = false
+    
+    // Debouncing for help requests
+    private var lastHelpRequestTime: Date = Date.distantPast
     
     // Session management for backend integration
     private var currentSessionId: String = ""
     
     init() {
-        self.conversation = Conversation(authToken: "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")
+        self.conversation = Conversation(authToken: "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")
         self.stacyAPIService = StacyAPIService()
         self.currentSessionId = "session_\(Date().timeIntervalSince1970)"
         
@@ -133,24 +136,210 @@ class VoiceVM: ObservableObject {
         let lowercasedTranscript = transcript.lowercased()
         let helpKeywords = [
             "help", "danger", "emergency", "police", "safe place",
-            "where can i go", "find place", "shelter"
+            "where can i go", "find place", "shelter", "alert",
+            "emergency contact", "notify", "contact"
         ]
         
         let needsHelp = helpKeywords.contains { keyword in
             lowercasedTranscript.contains(keyword)
         }
         
-        if needsHelp && !isSearchingPlaces && !waitingForNavigationConfirmation && !hasTriggeredHelpSearch {
-            print("🆘 HELP REQUEST DETECTED - Sending to backend for processing")
-            hasTriggeredHelpSearch = true
-            print("🔒 HELP SEARCH FLAG SET - Preventing duplicate requests")
+        if needsHelp && !isSearchingPlaces && !waitingForNavigationConfirmation {
+            // Debounce help requests - only process if 3 seconds have passed since last request
+            let now = Date()
+            let timeSinceLastRequest = now.timeIntervalSince(lastHelpRequestTime)
             
-            // Send to backend for intelligent processing
-            Task {
-                await processUserMessageWithBackend(transcript)
+            if timeSinceLastRequest > 3.0 {
+                print("🆘 HELP REQUEST DETECTED - Processing immediately")
+                lastHelpRequestTime = now
+                
+                // Process immediately for real-time response
+                processHelpRequestImmediately(transcript)
+                
+                // Also send to backend for intelligent processing (but don't wait for it)
+                Task {
+                    await processUserMessageWithBackend(transcript)
+                }
+            } else {
+                print("⏸️ HELP REQUEST DEBOUNCED - Too soon since last request (\(String(format: "%.1f", timeSinceLastRequest))s)")
             }
-        } else if needsHelp && hasTriggeredHelpSearch {
-            print("⏸️ HELP ALREADY TRIGGERED - Ignoring additional help requests")
+        }
+    }
+    
+    private func processHelpRequestImmediately(_ transcript: String) {
+        print("⚡ IMMEDIATE HELP PROCESSING - Starting local processing")
+        print("⚡ TRANSCRIPT: '\(transcript)'")
+        let lowercasedTranscript = transcript.lowercased()
+        
+        // Check for specific keywords to trigger immediate actions
+        let safePlaceKeywords = ["safe place", "find place", "where can i go", "shelter", "police", "safe", "places"]
+        let emergencyKeywords = ["emergency", "danger", "help", "alert", "contact", "notify", "call", "text"]
+        
+        let needsSafePlaces = safePlaceKeywords.contains { keyword in
+            lowercasedTranscript.contains(keyword)
+        }
+        
+        let needsEmergency = emergencyKeywords.contains { keyword in
+            lowercasedTranscript.contains(keyword)
+        }
+        
+        print("⚡ SAFE PLACES DETECTED: \(needsSafePlaces)")
+        print("⚡ EMERGENCY DETECTED: \(needsEmergency)")
+        
+        if needsSafePlaces {
+            print("🏃‍♂️ IMMEDIATE SAFE PLACES SEARCH - Triggering now")
+            DispatchQueue.main.async {
+                self.searchNearbyPlacesAutomatically()
+            }
+        }
+        
+        if needsEmergency {
+            print("🚨 IMMEDIATE EMERGENCY PROCESSING - Checking for emergency contacts")
+            // Check if user wants to alert emergency contacts
+            let emergencyContactKeywords = ["emergency contact", "alert", "notify", "contact", "call", "text", "emergency"]
+            let wantsEmergencyContact = emergencyContactKeywords.contains { keyword in
+                lowercasedTranscript.contains(keyword)
+            }
+            
+            print("⚡ EMERGENCY CONTACT REQUESTED: \(wantsEmergencyContact)")
+            
+            if wantsEmergencyContact && !isProcessingEmergency {
+                print("📞 IMMEDIATE EMERGENCY CONTACT ALERT - Triggering now")
+                isProcessingEmergency = true
+                DispatchQueue.main.async {
+                    self.handleEmergencyContactAlertImmediately()
+                }
+            } else if wantsEmergencyContact && isProcessingEmergency {
+                print("⏸️ EMERGENCY PROCESSING ALREADY IN PROGRESS - Skipping duplicate")
+            }
+        }
+        
+        // Send message to LLM for conversation
+        sendMessageToLLM("The user is asking for help. You should respond reassuringly and let them know you're finding safe places and checking on emergency contacts.")
+    }
+    
+    func handleEmergencyContactAlertImmediately() {
+        print("🚨 IMMEDIATE EMERGENCY CONTACT ALERT - Function called")
+        print("🚨 IMMEDIATE EMERGENCY CONTACT ALERT - Starting execution")
+        
+        // Set flag to prevent duplicates
+        isProcessingEmergency = true
+        
+        guard let locationManager = locationManager,
+              let location = locationManager.location else {
+            print("❌ IMMEDIATE EMERGENCY CONTACT ALERT - Location not available")
+            print("❌ LocationManager: \(locationManager != nil)")
+            print("❌ Location: \(locationManager?.location != nil)")
+            isProcessingEmergency = false
+            return
+        }
+        
+        guard let stacyAPIService = stacyAPIService else {
+            print("❌ IMMEDIATE EMERGENCY CONTACT ALERT - API service not available")
+            isProcessingEmergency = false
+            return
+        }
+        
+        print("✅ IMMEDIATE EMERGENCY CONTACT ALERT - All services available")
+        
+        print("✅ IMMEDIATE EMERGENCY CONTACT ALERT - Starting simultaneous call and SMS")
+        print("   Location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+        
+        let emergencyContact = EmergencyContact(
+            name: "Emergency Contact",
+            phone: "+14383761217", // Using the same number as other functions
+            relationship: "Emergency Contact"
+        )
+        
+        print("📱 IMMEDIATE EMERGENCY CONTACT ALERT - Contact created: \(emergencyContact.phone)")
+        
+        // Send SMS to emergency contact
+        Task {
+            print("📱 IMMEDIATE EMERGENCY CONTACT ALERT - Sending SMS...")
+            let smsResult = await stacyAPIService.alertEmergencyContacts(
+                emergencyContacts: [emergencyContact],
+                location: location.coordinate,
+                message: "🚨 EMERGENCY ALERT: I need help right now! My location: \(location.coordinate.latitude), \(location.coordinate.longitude)"
+            )
+            
+            switch smsResult {
+            case .success(_):
+                print("✅ IMMEDIATE EMERGENCY CONTACT ALERT - SMS sent successfully")
+            case .failure(let error):
+                print("❌ IMMEDIATE EMERGENCY CONTACT ALERT - SMS failed: \(error)")
+            }
+        }
+        
+        // Make call to emergency contact
+        Task {
+            print("📞 IMMEDIATE EMERGENCY CONTACT ALERT - Making call...")
+            let callResult = await stacyAPIService.callEmergencyDispatch(
+                phone: emergencyContact.phone,
+                location: location.coordinate,
+                emergencyContacts: [emergencyContact]
+            )
+            
+            switch callResult {
+            case .success(_):
+                print("✅ IMMEDIATE EMERGENCY CONTACT ALERT - Call initiated successfully")
+            case .failure(let error):
+                print("❌ IMMEDIATE EMERGENCY CONTACT ALERT - Call failed: \(error)")
+            }
+        }
+        
+        // Update status to show what we're doing
+        statusText = "Alerting emergency contacts..."
+        
+        // Send confirmation message to LLM
+        sendMessageToLLM("Emergency contacts have been alerted immediately. Both SMS and phone call have been initiated. Please reassure the user that help is on the way.")
+        
+        // Reset the flag after processing is complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.isProcessingEmergency = false
+            print("🔄 EMERGENCY PROCESSING FLAG RESET - Ready for new requests")
+        }
+    }
+    
+    // MARK: - Test Functions
+    
+    func testEmergencyDispatch() {
+        print("🧪 TESTING EMERGENCY DISPATCH")
+        
+        guard let locationManager = locationManager,
+              let location = locationManager.location else {
+            print("❌ TEST EMERGENCY DISPATCH - Location not available")
+            return
+        }
+        
+        guard let stacyAPIService = stacyAPIService else {
+            print("❌ TEST EMERGENCY DISPATCH - API service not available")
+            return
+        }
+        
+        let testContact = EmergencyContact(
+            name: "Test Contact",
+            phone: "+14383761217",
+            relationship: "Test Contact"
+        )
+        
+        print("🧪 TEST EMERGENCY DISPATCH - Testing with contact: \(testContact.phone)")
+        print("🧪 TEST EMERGENCY DISPATCH - Location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+        
+        Task {
+            let result = await stacyAPIService.callEmergencyDispatch(
+                phone: testContact.phone,
+                location: location.coordinate,
+                emergencyContacts: [testContact]
+            )
+            
+            switch result {
+            case .success(let response):
+                print("✅ TEST EMERGENCY DISPATCH - Success: \(response)")
+                statusText = "Test emergency dispatch successful!"
+            case .failure(let error):
+                print("❌ TEST EMERGENCY DISPATCH - Failed: \(error)")
+                statusText = "Test emergency dispatch failed: \(error.localizedDescription)"
+            }
         }
     }
     
@@ -173,9 +362,9 @@ class VoiceVM: ObservableObject {
         print("✅ BACKEND PROCESSING - Sending to backend...")
         let result = await stacyAPIService.sendChatMessage(
             message: message,
-            location: location,
             sessionId: currentSessionId,
-            mode: "voice"
+            mode: "voice",
+            location: location.coordinate
         )
         
         await MainActor.run {
@@ -194,18 +383,17 @@ class VoiceVM: ObservableObject {
     private func handleBackendResponse(_ response: ChatResponse) {
         print("🤖 HANDLING BACKEND RESPONSE:")
         print("   Reply: '\(response.reply)'")
-        print("   Action: '\(response.action ?? "none")'")
-        print("   Risk Level: '\(response.riskLevel ?? "none")'")
+        print("   Actions: '\(response.actions)'")
+        print("   Risk Level: '\(response.riskLevel)'")
         
         // Update UI with Stacy's response
         self.lastLLMResponse = response.reply
         
-        // Reset help search flag since we've processed the response
-        print("🔄 RESETTING HELP SEARCH FLAG - User can now make new help requests")
-        self.hasTriggeredHelpSearch = false
+        // Response processed successfully
+        print("✅ BACKEND RESPONSE PROCESSED - User can make new requests")
         
         // Handle specific actions from backend
-        if let action = response.action {
+        for action in response.actions {
             print("🎯 BACKEND ACTION: \(action)")
             switch action {
             case "escalate_to_police":
@@ -223,6 +411,14 @@ class VoiceVM: ObservableObject {
                 // Backend is asking for more information, just show the response
                 // Don't trigger additional actions, let user respond
                 break
+            case "emergency_handoff", "send_sms", "alert_emergency_contacts", "notify_emergency_contact":
+                print("🚨 EMERGENCY CONTACT ALERT - Backend triggered")
+                // Only trigger once per response, not per action
+                if !isProcessingEmergency {
+                    handleEmergencyContactAlertImmediately()
+                } else {
+                    print("⏸️ EMERGENCY ALREADY PROCESSING - Skipping duplicate action")
+                }
             default:
                 print("❓ UNKNOWN ACTION: \(action)")
             }
@@ -281,24 +477,22 @@ class VoiceVM: ObservableObject {
             let emergencyContacts = [
                 EmergencyContact(
                     name: "Emergency Contact",
-                    phone: "+15146605707", // Using the number from your backend
-                    relationship: "Emergency Contact",
-                    priority: 1
+                    phone: "+14383761217", // Using the number from your backend
+                    relationship: "Emergency Contact"
                 )
             ]
             
             let result = await stacyAPIService?.callEmergencyDispatch(
-                phoneNumber: "+15146605707", // Using the number from your backend
-                userLocation: location,
-                emergencyContacts: emergencyContacts,
-                conversationContext: response.conversation_context
+                phone: "+14383761217", // Using the number from your backend
+                location: location.coordinate,
+                emergencyContacts: emergencyContacts
             )
             
             await MainActor.run {
                 if let result = result {
                     switch result {
                     case .success(let callResponse):
-                        if callResponse.success {
+                        if callResponse.success == true {
                             self.statusText = "Emergency call initiated"
                             self.lastLLMResponse = "Emergency services have been contacted. Stay on the line."
                         } else {
@@ -321,12 +515,10 @@ class VoiceVM: ObservableObject {
     }
     
     private func fallbackToLocalProcessing(_ message: String) {
-        // Fallback to original local processing
-        sendMessageToLLM("The user is asking for help finding safe places. You already have their location access, so you can immediately offer to search for nearby places without asking for their location.")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.searchNearbyPlacesAutomatically()
-        }
+        print("🔄 FALLBACK TO LOCAL PROCESSING - Backend failed, using local processing")
+        // Don't duplicate emergency processing since immediate processing already handled it
+        // Just send a message to LLM for conversation
+        sendMessageToLLM("The user is asking for help. You should respond reassuringly and let them know you're finding safe places and checking on emergency contacts.")
     }
     
     private func sendMessageToLLM(_ message: String) {
@@ -360,12 +552,12 @@ class VoiceVM: ObservableObject {
         stopLocalSpeechRecognition()
         
         // Always stop OpenAI conversation completely
-        conversation.stopHandlingVoice()
+            conversation.stopHandlingVoice()
         
         self.isListening = false
         self.statusText = "Ready to help"
-        // Clear transcript when stopping
-        self.transcript = ""
+        // Don't clear transcript when stopping - keep it visible
+        // self.transcript = ""
         // Clear LLM response when stopping
         self.lastLLMResponse = ""
         
@@ -374,7 +566,6 @@ class VoiceVM: ObservableObject {
         self.waitingForNavigationConfirmation = false
         self.suggestedPlace = nil
         self.isProvidingPlacesResponse = false
-        self.hasTriggeredHelpSearch = false
     }
     
     @MainActor
@@ -387,13 +578,19 @@ class VoiceVM: ObservableObject {
     }
     
     private func startLocalSpeechRecognition() {
+        print("🎤 STARTING LOCAL SPEECH RECOGNITION")
+        print("🎤 SPEECH RECOGNIZER AVAILABLE: \(speechRecognizer?.isAvailable ?? false)")
+        print("🎤 SPEECH RECOGNIZER LOCALE: \(speechRecognizer?.locale.identifier ?? "unknown")")
+        
         let request = SFSpeechAudioBufferRecognitionRequest()
         let inputNode = audioEngine.inputNode
         
         recognitionTask = speechRecognizer?.recognitionTask(with: request) { [weak self] result, error in
             if let result = result {
                 DispatchQueue.main.async {
+                    print("🎤 SPEECH RECOGNITION RESULT: '\(result.bestTranscription.formattedString)'")
                     self?.transcript = result.bestTranscription.formattedString
+                    print("📝 TRANSCRIPT UPDATED: '\(self?.transcript ?? "nil")'")
                     
                     // Handle user responses to navigation confirmation
                     if self?.waitingForNavigationConfirmation == true {
@@ -420,8 +617,9 @@ class VoiceVM: ObservableObject {
         
         do {
             try audioEngine.start()
+            print("✅ AUDIO ENGINE STARTED SUCCESSFULLY")
         } catch {
-            print("Failed to start audio engine: \(error)")
+            print("❌ FAILED TO START AUDIO ENGINE: \(error)")
         }
     }
     
@@ -520,7 +718,6 @@ class VoiceVM: ObservableObject {
         // Reset the flags after providing our response
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.isProvidingPlacesResponse = false
-            self.hasTriggeredHelpSearch = false
         }
     }
     
@@ -551,7 +748,6 @@ class VoiceVM: ObservableObject {
                 waitingForNavigationConfirmation = false
                 suggestedPlace = nil
                 isProvidingPlacesResponse = false
-                hasTriggeredHelpSearch = false
             } else {
                 print("User response not recognized for navigation confirmation")
             }
@@ -592,5 +788,4 @@ class VoiceVM: ObservableObject {
             return String(format: "%.1f kilometers", distance / 1000)
         }
     }
-    
 }
