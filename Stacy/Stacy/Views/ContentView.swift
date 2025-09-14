@@ -133,8 +133,31 @@ struct ContentView: View {
                     // Centered buttons area
                     Spacer()
                     
-                    VStack(spacing: 30) {
-                        // VAPI Call Button
+                    VStack(spacing: 40) {
+                        // Big STACY title
+                        Text("STACY")
+                            .font(.system(size: 72, weight: .black, design: .rounded))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color.white,
+                                        Color.green.opacity(0.9),
+                                        Color.blue.opacity(0.8)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: .black.opacity(0.3), radius: 8, x: 2, y: 4)
+                            .scaleEffect(pulseAnimation ? 1.02 : 1.0)
+                            .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: pulseAnimation)
+                        
+                        Text("Your AI Safety Companion")
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                            .padding(.top, -20)
+                        // VAPI Call Button with Emergency Colors
                         Button(action: {
                             Task { @MainActor in
                                 voiceManager.initiateVAPIEmergencyCall()
@@ -144,17 +167,50 @@ struct ContentView: View {
                             }
                         }) {
                             ZStack {
+                                // Outer glow ring
                                 Circle()
-                                    .fill(circleColor.opacity(0.2))
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                Color.red.opacity(0.3),
+                                                Color.orange.opacity(0.2)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 180, height: 180)
                                     .scaleEffect(pulseAnimation ? 1.1 : 1.0)
                                     .opacity(pulseAnimation ? 0.5 : 1.0)
                                     .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: pulseAnimation)
                                 
+                                // Main button with gradient
                                 Circle()
-                                    .fill(circleColor)
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                Color.red.opacity(0.9),
+                                                Color.orange.opacity(0.8),
+                                                Color.red.opacity(0.7)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 150, height: 150)
-                                    .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
+                                    .shadow(color: .red.opacity(0.4), radius: 15, x: 0, y: 8)
+                                
+                                // Inner glow effect
+                                Circle()
+                                    .stroke(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [Color.white.opacity(0.4), Color.clear]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 2
+                                    )
+                                    .frame(width: 150, height: 150)
                                 
                                 VStack(spacing: 6) {
                                     Image(systemName: "phone.fill")
