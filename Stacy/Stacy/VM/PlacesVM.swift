@@ -92,6 +92,27 @@ enum PlaceCategory: String, CaseIterable, Codable {
             return "pills.fill"
         }
     }
+    
+    static func fromType(_ type: String) -> PlaceCategory {
+        switch type.lowercased() {
+        case "police_station", "police department":
+            return .police
+        case "fire_station", "fire department":
+            return .fire
+        case "hospital", "emergency room":
+            return .hospital
+        case "hotel":
+            return .hotel
+        case "gas_station":
+            return .gasStation
+        case "pharmacy", "drugstore":
+            return .pharmacy
+        case "restaurant", "cafe":
+            return .fastFood
+        default:
+            return .police // Default to police for safety
+        }
+    }
 }
 
 class PlacesService: ObservableObject {

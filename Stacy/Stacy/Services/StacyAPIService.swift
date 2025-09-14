@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import MapKit
 
 // MARK: - Request/Response Models
 struct ChatRequest: Codable {
@@ -25,14 +26,25 @@ struct LocationData: Codable {
 
 struct ChatResponse: Codable {
     let reply: String
-    let mode: String
-    let riskLevel: String
-    let riskChanged: Bool
-    let confidence: Double
-    let actions: [String]
-    let reasoning: String
-    let timestamp: String
+    let mode: String?
+    let riskLevel: String?
+    let riskChanged: Bool?
+    let confidence: Double?
+    let actions: [String]?
+    let reasoning: String?
+    let timestamp: String?
     let caseFile: CaseFile?
+    let fallback: Bool?  // Backend returns 'fallback' instead of 'mode' sometimes
+    let sessionId: String?
+    let model: String?
+    
+    // Computed property to get the actual mode
+    var actualMode: String {
+        if let fallback = fallback, fallback {
+            return "fallback"
+        }
+        return mode ?? "unknown"
+    }
 }
 
 struct CaseFile: Codable {
@@ -83,18 +95,40 @@ struct PlacesRequest: Codable {
 }
 
 struct PlacesResponse: Codable {
-    let places: [PlaceData]
+    let locations: [PlaceData]  // Backend returns 'locations', not 'places'
     let success: Bool
     let error: String?
+    
+    // Computed property for backward compatibility
+    var places: [PlaceData] {
+        return locations
+    }
 }
 
 struct PlaceData: Codable {
     let name: String
-    let address: String
+    let address: String?
     let latitude: Double
     let longitude: Double
     let type: String
     let distance: Double
+    
+    // Coding keys to map backend field names
+    private enum CodingKeys: String, CodingKey {
+        case name, type, distance
+        case latitude = "lat"
+        case longitude = "lng"
+        case address
+    }
+    
+    // Computed properties for backward compatibility
+    var lat: Double { return latitude }
+    var lng: Double { return longitude }
+}
+
+struct CaseFileResponse: Codable {
+    let success: Bool
+    let case_file: [String: AnyCodable]
 }
 
 // MARK: - AnyCodable for flexible JSON handling
@@ -148,7 +182,7 @@ struct AnyCodable: Codable {
 
 // MARK: - StacyAPIService
 class StacyAPIService: ObservableObject {
-    private let baseURL = "http://10.37.116.84:8080/api/stacy" // Using port 8080 for physical iPhone
+    private let baseURL = "http://10.37.116.84:3000/api" // Updated to match new Express.js backend
     
     private var urlSession: URLSession {
         let config = URLSessionConfiguration.default
@@ -157,6 +191,312 @@ class StacyAPIService: ObservableObject {
         return URLSession(configuration: config)
     }
     
+    // MARK: - New Backend API Methods
+    
+    func sendSMSAction(sessionId: String, phone: String, message: String, location: CLLocation?, reason: String = "user_confirmed") async -> Result<SMSResponse, Error> {
+        let locationData: LocationData?
+        if let location = location {
+            locationData = LocationData(
+                lat: location.coordinate.latitude,
+                lng: location.coordinate.longitude,
+                accuracy: location.horizontalAccuracy
+            )
+        } else {
+            locationData = nil
+        }
+        
+        let requestData: [String: Any] = [
+            "sessionId": sessionId,
+            "phone": phone,
+            "message": message,
+            "lat": locationData?.lat as Any,
+            "lng": locationData?.lng as Any,
+            "reason": reason
+        ]
+        
+        do {
+            let body = try JSONSerialization.data(withJSONObject: requestData)
+            return await makeRequest<SMSResponse>(
+                endpoint: "/action/sms",
+                method: "POST",
+                body: body,
+                responseType: SMSResponse.self
+            )
+        } catch {
+            return .failure(error)
+        }
+    }
+    
+    func makePhoneCall(sessionId: String, phone: String, script: String, location: CLLocation?, reason: String = "user_confirmed") async -> Result<VoiceCallResponse, Error> {
+        let locationData: LocationData?
+        if let location = location {
+            locationData = LocationData(
+                lat: location.coordinate.latitude,
+                lng: location.coordinate.longitude,
+                accuracy: location.horizontalAccuracy
+            )
+        } else {
+            locationData = nil
+        }
+        
+        let requestData: [String: Any] = [
+            "sessionId": sessionId,
+            "phone": phone,
+            "script": script,
+            "lat": locationData?.lat as Any,
+            "lng": locationData?.lng as Any,
+            "reason": reason
+        ]
+        
+        do {
+            let body = try JSONSerialization.data(withJSONObject: requestData)
+            return await makeRequest<VoiceCallResponse>(
+                endpoint: "/action/call",
+                method: "POST",
+                body: body,
+                responseType: VoiceCallResponse.self
+            )
+        } catch {
+            return .failure(error)
+        }
+    }
+    
+    func getSafeLocations(sessionId: String, location: CLLocation, radius: Int = 1000) async -> Result<PlacesResponse, Error> {
+        let locationData = LocationData(
+            lat: location.coordinate.latitude,
+            lng: location.coordinate.longitude,
+            accuracy: location.horizontalAccuracy
+        )
+        
+        let requestData: [String: Any] = [
+            "sessionId": sessionId,
+            "lat": locationData.lat,
+            "lng": locationData.lng,
+            "radius_m": radius
+        ]
+        
+        do {
+            let body = try JSONSerialization.data(withJSONObject: requestData)
+            return await makeRequest<PlacesResponse>(
+                endpoint: "/action/safe-locations",
+                method: "POST",
+                body: body,
+                responseType: PlacesResponse.self
+            )
+        } catch {
+            return .failure(error)
+        }
+    }
+    
+    func notifyEmergencyContact(sessionId: String, userName: String, triggerReason: String = "user_request") async -> Result<SMSResponse, Error> {
+        let requestData: [String: Any] = [
+            "sessionId": sessionId,
+            "userName": userName,
+            "triggerReason": triggerReason
+        ]
+        
+        do {
+            let body = try JSONSerialization.data(withJSONObject: requestData)
+            return await makeRequest<SMSResponse>(
+                endpoint: "/emergency/notify",
+                method: "POST",
+                body: body,
+                responseType: SMSResponse.self
+            )
+        } catch {
+            return .failure(error)
+        }
+    }
+    
+    func updateCaseFile(sessionId: String, updates: [String: Any]) async -> Result<CaseFileResponse, Error> {
+        do {
+            let body = try JSONSerialization.data(withJSONObject: updates)
+            return await makeRequest<CaseFileResponse>(
+                endpoint: "/casefile/\(sessionId)/update",
+                method: "POST",
+                body: body,
+                responseType: CaseFileResponse.self
+            )
+        } catch {
+            return .failure(error)
+        }
+    }
+    
+    // MARK: - MapKit Safe Places Search
+    func searchSafePlacesNearby(location: CLLocation, radius: Int = 1000) async -> Result<[PlaceData], Error> {
+        print("🗺️ MAPKIT SEARCH - Starting search for safe places")
+        print("   Location: \(location.coordinate)")
+        print("   Radius: \(radius)m")
+        
+        // Use specific search terms that MapKit will understand better
+        let safePlaceSearches = [
+            ("police station", "police_station"),
+            ("police department", "police_station"), 
+            ("hospital", "hospital"),
+            ("emergency room", "hospital"),
+            ("fire station", "fire_station"),
+            ("fire department", "fire_station"),
+            ("pharmacy", "pharmacy"),
+            ("drugstore", "pharmacy"),
+            ("gas station", "gas_station"),
+            ("24 hour restaurant", "restaurant"),
+            ("24 hour cafe", "cafe"),
+            ("hotel", "hotel"),
+            ("bank", "bank"),
+            ("library", "library"),
+            ("community center", "community_center")
+        ]
+        
+        var allPlaces: [PlaceData] = []
+        
+        for (searchTerm, category) in safePlaceSearches {
+            do {
+                let places = try await searchPlacesByType(searchTerm, location: location, radius: radius)
+                // Update the category for each place
+                let categorizedPlaces = places.map { place in
+                    PlaceData(
+                        name: place.name,
+                        address: place.address,
+                        latitude: place.latitude,
+                        longitude: place.longitude,
+                        type: category,
+                        distance: place.distance
+                    )
+                }
+                allPlaces.append(contentsOf: categorizedPlaces)
+                print("🗺️ MAPKIT SEARCH - Found \(places.count) \(searchTerm) places")
+            } catch {
+                print("❌ MAPKIT SEARCH - Failed to search \(searchTerm): \(error)")
+            }
+        }
+        
+        // Remove duplicates based on name and location
+        let uniquePlaces = removeDuplicatePlaces(allPlaces)
+        
+        // Sort by distance and prioritize police stations and hospitals
+        let sortedPlaces = uniquePlaces.sorted { place1, place2 in
+            // Prioritize police stations and hospitals
+            let priority1 = getPriority(place1.type)
+            let priority2 = getPriority(place2.type)
+            
+            if priority1 != priority2 {
+                return priority1 > priority2
+            }
+            
+            // If same priority, sort by distance
+            return place1.distance < place2.distance
+        }
+        
+        let topPlaces = Array(sortedPlaces.prefix(10))
+        
+        print("✅ MAPKIT SEARCH - Found \(topPlaces.count) total safe places")
+        for place in topPlaces {
+            print("   - \(place.name) (\(place.type)) - \(Int(place.distance))m")
+        }
+        
+        return .success(topPlaces)
+    }
+    
+    private func searchPlacesByType(_ type: String, location: CLLocation, radius: Int) async throws -> [PlaceData] {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = type
+        request.region = MKCoordinateRegion(
+            center: location.coordinate,
+            latitudinalMeters: Double(radius * 2),
+            longitudinalMeters: Double(radius * 2)
+        )
+        // Limit results to reduce search time
+        request.resultTypes = [.pointOfInterest]
+        
+        let search = MKLocalSearch(request: request)
+        let response = try await search.start()
+        
+        return response.mapItems.compactMap { mapItem in
+            let placemark = mapItem.placemark
+            guard let name = placemark.name ?? mapItem.name else {
+                return nil
+            }
+            
+            let placeLocation = CLLocation(
+                latitude: placemark.coordinate.latitude,
+                longitude: placemark.coordinate.longitude
+            )
+            let distance = location.distance(from: placeLocation)
+            
+            return PlaceData(
+                name: name,
+                address: formatAddress(placemark),
+                latitude: placemark.coordinate.latitude,
+                longitude: placemark.coordinate.longitude,
+                type: type,
+                distance: distance
+            )
+        }
+    }
+    
+    private func formatAddress(_ placemark: CLPlacemark) -> String {
+        var addressComponents: [String] = []
+        
+        if let streetNumber = placemark.subThoroughfare {
+            addressComponents.append(streetNumber)
+        }
+        if let streetName = placemark.thoroughfare {
+            addressComponents.append(streetName)
+        }
+        if let city = placemark.locality {
+            addressComponents.append(city)
+        }
+        if let state = placemark.administrativeArea {
+            addressComponents.append(state)
+        }
+        
+        return addressComponents.joined(separator: " ")
+    }
+    
+    private func removeDuplicatePlaces(_ places: [PlaceData]) -> [PlaceData] {
+        var seenPlaces: Set<String> = []
+        var uniquePlaces: [PlaceData] = []
+        
+        for place in places {
+            // Create a unique identifier based on name and location
+            let identifier = "\(place.name.lowercased())_\(Int(place.latitude * 1000))_\(Int(place.longitude * 1000))"
+            
+            if !seenPlaces.contains(identifier) {
+                seenPlaces.insert(identifier)
+                uniquePlaces.append(place)
+            }
+        }
+        
+        return uniquePlaces
+    }
+    
+    private func getPriority(_ type: String) -> Int {
+        switch type {
+        case "police_station":
+            return 10  // Highest priority
+        case "hospital":
+            return 9
+        case "fire_station":
+            return 8
+        case "pharmacy":
+            return 7
+        case "gas_station":
+            return 6
+        case "bank":
+            return 5
+        case "library":
+            return 4
+        case "community_center":
+            return 3
+        case "hotel":
+            return 2
+        case "restaurant", "cafe":
+            return 1  // Lowest priority
+        default:
+            return 0
+        }
+    }
+
     // MARK: - Generic Request Method
     private func makeRequest<T: Codable>(
         endpoint: String,

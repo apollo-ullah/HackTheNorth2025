@@ -166,6 +166,25 @@ struct ContentView: View {
                         .padding(.horizontal)
                     }
                     
+                    // Show found places
+                    if !voiceManager.foundPlaces.isEmpty {
+                        VStack(alignment: .leading, spacing: 15) {
+                            Text("Found Safe Places:")
+                                .font(.headline)
+                                .foregroundColor(.green)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(voiceManager.foundPlaces.prefix(5), id: \.name) { place in
+                                        PlaceCardCompact(place: place)
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    
                     // Navigation confirmation prompt
                     if voiceManager.waitingForNavigationConfirmation, let suggestedPlace = voiceManager.suggestedPlace {
                         VStack(spacing: 15) {
@@ -223,7 +242,7 @@ struct ContentView: View {
             NearbyPlacesView()
         }
         .sheet(isPresented: $showingTestButtons) {
-            TestButtonsView()
+            TestButtonsView(voiceVM: voiceManager)
         }
         .onAppear {
             voiceManager.setServices(
