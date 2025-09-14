@@ -136,6 +136,7 @@ export default function Home() {
       const response = await axios.post('/api/call', {
         phone_number: phoneNumber.trim(),
         assistant_name: 'Stacy AI Safety Companion',
+        location: currentLocation, // Pass the actual location object
         system_prompt: `You are Stacy, a professional AI safety companion and emergency dispatcher. 
 
 CURRENT CONTEXT:

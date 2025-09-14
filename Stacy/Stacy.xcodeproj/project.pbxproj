@@ -33,22 +33,9 @@
 		05EEFEA42E6A8FAC00E00E6F /* StacyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StacyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		AF2F82F22E7656FE005BA53B /* Exceptions for "Stacy" folder in "Stacy" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 05EEFE8C2E6A8FAB00E00E6F /* Stacy */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		05EEFE8F2E6A8FAB00E00E6F /* Stacy */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				AF2F82F22E7656FE005BA53B /* Exceptions for "Stacy" folder in "Stacy" target */,
-			);
 			path = Stacy;
 			sourceTree = "<group>";
 		};
@@ -420,7 +407,6 @@
 				DEVELOPMENT_TEAM = U864964B3Y;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Stacy/Info.plist;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs location access to find nearby safe places and provide navigation assistance.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to find nearby safe places and provide navigation assistance.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs access to the microphone for voice input.";
@@ -453,7 +439,6 @@
 				DEVELOPMENT_TEAM = U864964B3Y;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Stacy/Info.plist;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs location access to find nearby safe places and provide navigation assistance.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to find nearby safe places and provide navigation assistance.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs access to the microphone for voice input.";
