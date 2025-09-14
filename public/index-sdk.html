@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stacy - AI Safety Companion</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <h1>Stacy</h1>
+            </div>
+            <div class="status-indicator" id="connectionStatus">
+                <div class="status-dot"></div>
+                <span>Initializing...</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="conversation-area">
+                <div class="messages-container" id="messagesContainer">
+                    <div class="welcome-message">
+                        <div class="ai-avatar">🤖</div>
+                        <div class="message-content">
+                            <p>Hi, I'm Stacy, your AI safety companion. I'm here to help keep you safe.</p>
+                            <p>Click the microphone to start talking to me about any situation where you feel unsafe.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <div class="voice-controls">
+                    <button class="mic-button" id="micButton" disabled>
+                        <div class="mic-icon">🎤</div>
+                        <div class="mic-status">Loading...</div>
+                    </button>
+                    
+                    <div class="audio-visualizer" id="audioVisualizer">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                </div>
+
+                <div class="emergency-controls">
+                    <button class="emergency-button" id="emergencyButton">
+                        <span class="emergency-icon">🚨</span>
+                        <span>Emergency</span>
+                    </button>
+                    
+                    <button class="location-button" id="locationButton">
+                        <span class="location-icon">📍</span>
+                        <span>Share Location</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <div class="safety-tips">
+                <p><strong>Safety Tips:</strong> Stay in well-lit areas • Trust your instincts • Keep phone charged</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Emergency Modal -->
+    <div class="modal-overlay" id="emergencyModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🚨 Emergency Mode Activated</h2>
+                <button class="close-modal" id="closeEmergencyModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Your location is being shared with emergency contacts.</p>
+                <div class="emergency-actions">
+                    <button class="action-button" id="callEmergencyServices">📞 Call 911</button>
+                    <button class="action-button" id="textEmergencyContact">📱 Text Emergency Contact</button>
+                    <button class="action-button" id="findSafeLocation">🏢 Find Safe Location</button>
+                </div>
+                <div class="location-info" id="locationInfo">
+                    <p>📍 Getting your location...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal-overlay" id="loadingModal">
+        <div class="modal-content">
+            <div class="modal-body" style="text-align: center; padding: 40px;">
+                <div class="loading-spinner"></div>
+                <h3>Connecting to Stacy...</h3>
+                <p>Setting up secure connection to AI safety companion</p>
+                <div id="loadingStatus">Requesting session token...</div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #e1e5f2;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    </style>
+
+    <!-- Import OpenAI Agents SDK -->
+    <script type="module" src="app-sdk.js"></script>
+</body>
+</html>
