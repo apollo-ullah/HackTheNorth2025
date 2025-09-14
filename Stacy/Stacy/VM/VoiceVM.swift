@@ -43,7 +43,7 @@ class VoiceVM: ObservableObject {
     private var currentSessionId: String = ""
     
     init() {
-        self.conversation = Conversation(authToken: "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")
+        self.conversation = Conversation(authToken: ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? "")
         self.stacyAPIService = StacyAPIService()
         self.currentSessionId = "session_\(Date().timeIntervalSince1970)"
         

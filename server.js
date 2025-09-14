@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const server = createServer(app);
+const server = createServer(app);he issues
 const wss = new WebSocketServer({ server });
 
 // Initialize Realtime Handler
@@ -32,9 +32,9 @@ const connections = new Map();
 wss.on('connection', (ws) => {
   const connectionId = generateId();
   connections.set(connectionId, ws);
-  
+
   console.log(`New WebSocket connection: ${connectionId}`);
-  
+
   ws.on('message', async (message) => {
     try {
       const data = JSON.parse(message);
@@ -44,43 +44,43 @@ wss.on('connection', (ws) => {
       ws.send(JSON.stringify({ type: 'error', message: 'Failed to process message' }));
     }
   });
-  
+
   ws.on('close', () => {
     connections.delete(connectionId);
     realtimeHandler.closeSession(connectionId);
     console.log(`WebSocket connection closed: ${connectionId}`);
   });
-  
+
   // Send initial connection confirmation
-  ws.send(JSON.stringify({ 
-    type: 'connected', 
+  ws.send(JSON.stringify({
+    type: 'connected',
     connectionId,
-    message: 'Connected to Stacy AI Safety Companion' 
+    message: 'Connected to Stacy AI Safety Companion'
   }));
 });
 
 // Message handler for different types of WebSocket messages
 async function handleMessage(ws, data, connectionId) {
   const { type, payload } = data;
-  
+
   switch (type) {
     case 'start_conversation':
       await startRealtimeConversation(ws, connectionId);
       break;
-      
+
     case 'audio_data':
       // Handle audio data from client
       await processAudioData(ws, payload, connectionId);
       break;
-      
+
     case 'end_conversation':
       await endConversation(ws, connectionId);
       break;
-      
+
     case 'emergency_trigger':
       await handleEmergencyTrigger(ws, payload, connectionId);
       break;
-      
+
     default:
       ws.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }));
   }
@@ -91,12 +91,12 @@ async function startRealtimeConversation(ws, connectionId) {
   try {
     // Create a new realtime session
     const session = await realtimeHandler.createSession(connectionId, ws);
-    
+
     ws.send(JSON.stringify({
       type: 'conversation_started',
       message: 'Hi, I\'m Stacy. I\'m here to help keep you safe. What\'s going on?'
     }));
-    
+
     console.log(`Started realtime conversation for connection: ${connectionId}`);
   } catch (error) {
     console.error('Error starting conversation:', error);
@@ -108,14 +108,14 @@ async function startRealtimeConversation(ws, connectionId) {
 async function processAudioData(ws, payload, connectionId) {
   try {
     console.log(`Processing audio data for connection: ${connectionId}`);
-    
+
     // Send audio data to OpenAI Realtime API
     if (payload.audio) {
       realtimeHandler.sendAudioToOpenAI(connectionId, payload.audio);
     }
-    
+
     // The response will come back through the realtime handler's message handling
-    
+
   } catch (error) {
     console.error('Error processing audio:', error);
     ws.send(JSON.stringify({ type: 'error', message: 'Failed to process audio' }));
@@ -126,13 +126,13 @@ async function processAudioData(ws, payload, connectionId) {
 async function handleEmergencyTrigger(ws, payload, connectionId) {
   try {
     const { location, emergencyType, contactInfo } = payload;
-    
+
     console.log(`Emergency triggered for connection: ${connectionId}`, {
       location,
       emergencyType,
       contactInfo
     });
-    
+
     // This is where we'd integrate with Twilio for SMS
     // For now, just acknowledge the trigger
     ws.send(JSON.stringify({
@@ -144,7 +144,7 @@ async function handleEmergencyTrigger(ws, payload, connectionId) {
         'Emergency services alerted'
       ]
     }));
-    
+
   } catch (error) {
     console.error('Error handling emergency:', error);
     ws.send(JSON.stringify({ type: 'error', message: 'Failed to handle emergency' }));
@@ -172,8 +172,8 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => {
   const stats = realtimeHandler.getSessionStats();
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     websocketConnections: connections.size,
     realtimeSessions: stats.activeSessions
