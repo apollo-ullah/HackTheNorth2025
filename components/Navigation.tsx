@@ -1,6 +1,6 @@
 interface NavigationProps {
-  currentMode: 'voice' | 'text' | 'stealth';
-  onModeChange: (mode: 'voice' | 'text' | 'stealth') => void;
+  currentMode: 'voice' | 'text';
+  onModeChange: (mode: 'voice' | 'text') => void;
 }
 
 export default function Navigation({ currentMode, onModeChange }: NavigationProps) {
@@ -47,24 +47,6 @@ export default function Navigation({ currentMode, onModeChange }: NavigationProp
         }}
       >
         💬 Text
-      </button>
-      
-      <button 
-        onClick={() => onModeChange('stealth')}
-        style={{
-          padding: '8px 16px',
-          background: currentMode === 'stealth' ? '#ef4444' : 'rgba(239, 68, 68, 0.2)',
-          border: `1px solid ${currentMode === 'stealth' ? '#ef4444' : '#ef4444'}`,
-          borderRadius: '20px',
-          color: currentMode === 'stealth' ? 'white' : '#ef4444',
-          fontSize: '12px',
-          fontWeight: 500,
-          backdropFilter: 'blur(10px)',
-          transition: 'all 0.2s ease',
-          cursor: 'pointer'
-        }}
-      >
-        🤫 Stealth
       </button>
     </div>
   );

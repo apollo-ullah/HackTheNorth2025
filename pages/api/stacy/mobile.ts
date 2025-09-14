@@ -36,49 +36,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.json(result);
           }
 
-          case 'check_in': {
-            // Safety check-in with risk assessment
-            const { message, location } = req.body;
-            const riskLevel = assessRiskLevel(message);
+          case 'panic_alert': {
+            // Streamlined panic button - same as quick_alert but more intuitive name
+            const { location, emergency_contact } = req.body.data || req.body;
             
-            return res.json({
-              success: true,
-              riskLevel,
-              recommendations: getRiskRecommendations(riskLevel),
-              timestamp: new Date().toISOString(),
-            });
-          }
-
-          case 'find_help': {
-            // Find nearby safe locations
-            const { location, type } = req.body;
-            const safeLocations = await stacyTools.getSafeLocations(location);
+            if (!emergency_contact?.phone) {
+              return res.status(400).json({ error: 'Emergency contact phone number required' });
+            }
             
-            // Filter by type if specified
-            const filteredLocations = type 
-              ? safeLocations.filter(loc => loc.type === type)
-              : safeLocations;
-            
-            return res.json({
-              success: true,
-              locations: filteredLocations,
-              timestamp: new Date().toISOString(),
-            });
-          }
-
-          case 'stealth_mode': {
-            // Discrete emergency communication
-            const { contact_phone, code_word, location } = req.body;
-            
-            const stealthMessage = `${code_word} - Location: https://maps.google.com/?q=${location.lat},${location.lng} - ${new Date().toLocaleString()}`;
+            const alertMessage = `🚨 EMERGENCY ALERT 🚨\n\nPanic button activated - immediate assistance needed\n\nLocation: https://maps.google.com/?q=${location.lat},${location.lng}\nTime: ${new Date().toLocaleString()}\n\nThis is an automated alert from Stacy AI Safety Companion.`;
             
             const result = await stacyTools.sendContactSms(
-              contact_phone,
-              stealthMessage,
+              emergency_contact.phone,
+              alertMessage,
               location
             );
             
-            return res.json(result);
+            return res.json({ 
+              ...result, 
+              message: 'Emergency alert sent successfully',
+              timestamp: new Date().toISOString()
+            });
           }
 
           default:
@@ -93,10 +71,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           service: 'Stacy AI Safety Companion',
           version: '1.0.0',
           features: [
-            'quick_alert',
-            'check_in', 
-            'find_help',
-            'stealth_mode',
+            'panic_alert',
+            'quick_alert',  // Legacy support
             'voice_calls',
             'emergency_dispatch'
           ],

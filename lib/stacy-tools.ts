@@ -115,48 +115,18 @@ export class StacyTools {
     }
   }
 
-  // Professional emergency briefing call
-  async callDemoEmergency(
-    caseFile: CaseFile,
-    briefingScript: string
-  ): Promise<{ success: boolean; callId?: string; error?: string }> {
-    try {
-      // Create TwiML for emergency briefing
-      const twimlScript = `
-        <Response>
-          <Say voice="alice">Emergency briefing for case ${caseFile.id}. ${briefingScript}</Say>
-          <Pause length="2"/>
-          <Say voice="alice">Connecting user to conference now.</Say>
-          <Dial>
-            <Conference>emergency-${caseFile.id}</Conference>
-          </Dial>
-        </Response>
-      `;
-
-      // Make call using Twilio
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${this.twilioAccountSid}/Calls.json`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${Buffer.from(`${this.twilioAccountSid}:${this.twilioAuthToken}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          From: this.twilioNumber,
-          To: this.twilioNumber, // Demo call to your own number
-          Twiml: twimlScript,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, callId: data.sid };
-      } else {
-        const error = await response.text();
-        return { success: false, error };
-      }
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  // Simple method to validate emergency transfer request
+  validateEmergencyTransfer(destination: string, reason: string): { valid: boolean; message: string } {
+    if (!destination || destination !== '+15146605707') {
+      return { valid: false, message: 'Invalid emergency services destination' };
     }
+    
+    if (!reason || reason.trim().length === 0) {
+      return { valid: false, message: 'Transfer reason is required' };
+    }
+    
+    console.log(`🚨 Emergency transfer validated: ${destination} - ${reason}`);
+    return { valid: true, message: 'Emergency transfer request is valid' };
   }
 
   // Find nearby safe locations

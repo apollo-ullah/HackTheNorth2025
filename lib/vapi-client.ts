@@ -57,8 +57,9 @@ export class VAPIClient {
           ],
         },
         voice: {
-          provider: '11labs',
-          voiceId: '21m00Tcm4TlvDq8ikWAM', // Default voice
+          provider: 'openai',
+          model: 'tts-1-hd',
+          voice: 'nova'
         },
       }),
     });
@@ -116,104 +117,109 @@ export class VAPIClient {
                   type: 'object',
                   properties: {
                     caseId: { type: 'string', description: 'Unique case identifier' },
-                    updates: {
+                    riskLevel: { type: 'string', enum: ['SAFE', 'ELEVATED', 'CRITICAL'], description: 'Current risk assessment level' },
+                    threat: {
                       type: 'object',
                       properties: {
-                        riskLevel: { type: 'string', enum: ['SAFE', 'ELEVATED', 'CRITICAL'] },
-                        threat: {
-                          type: 'object',
-                          properties: {
-                            description: { type: 'string' },
-                            type: { type: 'string' },
-                            immediacy: { type: 'string', enum: ['immediate', 'developing', 'potential'] }
-                          }
-                        },
-                        userStatus: {
-                          type: 'object',
-                          properties: {
-                            canSpeak: { type: 'boolean' },
-                            canText: { type: 'boolean' },
-                            isHidden: { type: 'boolean' }
-                          }
-                        }
+                        description: { type: 'string' },
+                        type: { type: 'string' },
+                        immediacy: { type: 'string', enum: ['immediate', 'developing', 'potential'] }
+                      }
+                    },
+                    userStatus: {
+                      type: 'object',
+                      properties: {
+                        canSpeak: { type: 'boolean' },
+                        canText: { type: 'boolean' },
+                        isHidden: { type: 'boolean' }
+                      }
+                    },
+                    location: {
+                      type: 'object',
+                      properties: {
+                        lat: { type: 'number' },
+                        lng: { type: 'number' },
+                        accuracy: { type: 'number' }
                       }
                     }
                   },
-                  required: ['caseId', 'updates']
+                  required: ['caseId']
                 }
               }
             },
             {
-              type: 'function',
+              type: 'transferCall',
+              destinations: [
+                {
+                  type: 'number',
+                  number: '+15146605707',
+                  description: 'Emergency services - police dispatcher',
+                  transferPlan: {
+                    mode: 'warm-transfer-with-summary',
+                    summaryPlan: {
+                      enabled: true,
+                      messages: [
+                        {
+                          role: 'system',
+                          content: 'You are Stacy AI Emergency Dispatcher providing a professional emergency briefing to police. Provide a concise summary including: risk level, location, threat description, and user status.'
+                        },
+                        {
+                          role: 'user',
+                          content: 'Emergency briefing:\n\nCall Transcript:\n{{transcript}}\n\nProvide a professional emergency dispatch summary.'
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              messages: [
+                {
+                  type: 'request-start',
+                  content: 'I\'m connecting you with emergency services now. I\'ll brief them about your situation first, then you can speak directly with them. Stay on the line.'
+                }
+              ],
               function: {
-                name: 'notify_emergency_contact',
-                description: 'Send comprehensive emergency report to emergency contact',
+                name: 'transfer_to_emergency_services',
+                description: 'Transfer the call to emergency services when the situation is CRITICAL. Use this when immediate police response is needed.',
                 parameters: {
                   type: 'object',
                   properties: {
-                    contact: {
-                      type: 'object',
-                      properties: {
-                        name: { type: 'string' },
-                        phone: { type: 'string' },
-                        relationship: { type: 'string' }
-                      },
-                      required: ['name', 'phone', 'relationship']
+                    destination: {
+                      type: 'string',
+                      enum: ['+15146605707'],
+                      description: 'Emergency services number to transfer to'
                     },
-                    urgentMessage: { type: 'string', description: 'Urgent message to include in the report' }
+                    reason: {
+                      type: 'string',
+                      description: 'Brief reason for the emergency transfer'
+                    }
                   },
-                  required: ['contact', 'urgentMessage']
+                  required: ['destination', 'reason']
                 }
               }
             },
             {
               type: 'function',
               function: {
-                name: 'call_demo_emergency',
-                description: 'Place emergency briefing call to demonstrate emergency services communication',
+                name: 'send_location_sms',
+                description: 'Send SMS with current location to any phone number',
                 parameters: {
                   type: 'object',
                   properties: {
-                    briefingScript: { type: 'string', description: 'Professional briefing script for emergency services' }
-                  },
-                  required: ['briefingScript']
-                }
-              }
-            },
-            {
-              type: 'function',
-              function: {
-                name: 'send_contact_sms',
-                description: 'Send direct SMS to any phone number with optional location',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    phoneNumber: { type: 'string', description: 'Phone number in E.164 format' },
-                    message: { type: 'string', description: 'SMS message content' },
-                    includeLocation: { type: 'boolean', description: 'Whether to include current location' }
+                    phoneNumber: { type: 'string' },
+                    message: { type: 'string' },
+                    urgent: { type: 'boolean', default: false }
                   },
                   required: ['phoneNumber', 'message']
-                }
-              }
-            },
-            {
-              type: 'function',
-              function: {
-                name: 'get_safe_locations',
-                description: 'Find nearby safe locations like police stations, hospitals',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    radius: { type: 'number', description: 'Search radius in meters', default: 5000 }
-                  }
                 }
               }
             }
           ]
         },
         voice: {
-          provider: '11labs',
-          voiceId: 'pNInz6obpgDQGcFmaJgB', // Professional female voice for safety contexts
+          provider: 'openai',
+          model: 'tts-1-hd',
+          voice: 'nova'
         },
         firstMessage: assistantConfig.first_message || 'This is Stacy, your AI safety companion. I\'m here to help you stay safe. What\'s your situation?',
       };
@@ -236,8 +242,9 @@ export class VAPIClient {
           ],
         },
         voice: {
-          provider: '11labs',
-          voiceId: '21m00Tcm4TlvDq8ikWAM',
+          provider: 'openai',
+          model: 'tts-1-hd',
+          voice: 'nova'
         },
         firstMessage: 'Hello! How can I help you today?',
       };
