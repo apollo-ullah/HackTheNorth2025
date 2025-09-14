@@ -21,10 +21,14 @@ class VoiceVM: ObservableObject {
     @Published var isSearchingPlaces = false
     @Published var waitingForNavigationConfirmation = false
     @Published var suggestedPlace: Place?
-    @Published var testStatus = ""
     
     // Debouncing for transcript updates
     private var transcriptUpdateTimer: Timer?
+    
+    // Debouncing for help requests
+    private var lastHelpRequestTime: Date = Date.distantPast
+    private let helpRequestDebounceInterval: TimeInterval = 5.0
+    
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
     private let speechRecognizer = SFSpeechRecognizer()
@@ -39,15 +43,12 @@ class VoiceVM: ObservableObject {
     private var isProvidingPlacesResponse = false
     private var isProcessingEmergency = false
     
-    // Debouncing for help requests
-    private var lastHelpRequestTime: Date = Date.distantPast
-    private let helpRequestDebounceInterval: TimeInterval = 5.0
-        
+
     // Session management for backend integration
     private var currentSessionId: String = ""
     
     init() {
-        self.conversation = Conversation(authToken: "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")
+        self.conversation = Conversation(authToken: "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")
         self.stacyAPIService = StacyAPIService()
         self.currentSessionId = "session_\(Date().timeIntervalSince1970)"
         
@@ -115,20 +116,6 @@ class VoiceVM: ObservableObject {
         }
     }
     
-    private func updateTranscriptWithDebouncing(_ newTranscript: String) {
-        // Cancel previous timer
-        transcriptUpdateTimer?.invalidate()
-        
-        // Set new timer to update transcript after a short delay
-        transcriptUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.transcript = newTranscript
-                print("📝 TRANSCRIPT UPDATED (debounced): '\(self?.transcript ?? "nil")'")
-                print("📝 TRANSCRIPT LENGTH: \(newTranscript.count)")
-            }
-        }
-    }
-    
     @MainActor
     func startListening() {
         startLocalSpeechRecognition()
@@ -150,23 +137,11 @@ class VoiceVM: ObservableObject {
         }
     }
     
-    private func hasCompleteHelpPhrase(_ transcript: String) -> Bool {
-        let lowercasedTranscript = transcript.lowercased()
-        let completePhrases = [
-            "find safe places", "safe places", "find places", "safe place",
-            "where can i go", "help me find", "need help", "emergency"
-        ]
-        
-        return completePhrases.contains { phrase in
-            lowercasedTranscript.contains(phrase)
-        }
-    }
-    
     private func checkForHelpRequest(_ transcript: String) {
         let lowercasedTranscript = transcript.lowercased()
         let helpKeywords = [
-            "help", "danger", "emergency", "police", "safe place", "safe places",
-            "where can i go", "find place", "find places", "shelter", "alert",
+            "help", "danger", "emergency", "police", "safe place",
+            "where can i go", "find place", "shelter", "alert",
             "emergency contact", "notify", "contact"
         ]
         
@@ -174,21 +149,13 @@ class VoiceVM: ObservableObject {
             lowercasedTranscript.contains(keyword)
         }
         
-        print("🆘 HELP REQUEST CHECK:")
-        print("   Transcript: '\(lowercasedTranscript)'")
-        print("   Keywords found: \(helpKeywords.filter { lowercasedTranscript.contains($0) })")
-        print("   Needs help: \(needsHelp)")
-        print("   Is searching places: \(isSearchingPlaces)")
-        print("   Waiting for navigation: \(waitingForNavigationConfirmation)")
-        
         if needsHelp && !isSearchingPlaces && !waitingForNavigationConfirmation {
-            // Debounce help requests - only process if enough time has passed since last request
+            // Debounce help requests - only process if 3 seconds have passed since last request
             let now = Date()
             let timeSinceLastRequest = now.timeIntervalSince(lastHelpRequestTime)
             
-            if timeSinceLastRequest > helpRequestDebounceInterval {
+            if timeSinceLastRequest > 3.0 {
                 print("🆘 HELP REQUEST DETECTED - Processing immediately")
-                print("   Time since last request: \(String(format: "%.1f", timeSinceLastRequest))s")
                 lastHelpRequestTime = now
                 
                 // Process immediately for real-time response
@@ -225,7 +192,7 @@ class VoiceVM: ObservableObject {
         print("⚡ EMERGENCY DETECTED: \(needsEmergency)")
         
         if needsSafePlaces {
-            print("🏃‍♂️ SAFE PLACES REQUEST DETECTED - Triggering MapKit search")
+            print("🏃‍♂️ IMMEDIATE SAFE PLACES SEARCH - Triggering now")
             DispatchQueue.main.async {
                 self.searchNearbyPlacesAutomatically()
             }
@@ -427,9 +394,8 @@ class VoiceVM: ObservableObject {
     private func handleBackendResponse(_ response: ChatResponse) {
         print("🤖 HANDLING BACKEND RESPONSE:")
         print("   Reply: '\(response.reply)'")
-        print("   Actions: '\(response.actions ?? [])'")
-        print("   Risk Level: '\(response.riskLevel ?? "unknown")'")
-        print("   Mode: '\(response.actualMode)'")
+        print("   Actions: '\(response.actions)'")
+        print("   Risk Level: '\(response.riskLevel)'")
         
         // Update UI with Stacy's response
         self.lastLLMResponse = response.reply
@@ -438,7 +404,8 @@ class VoiceVM: ObservableObject {
         print("✅ BACKEND RESPONSE PROCESSED - User can make new requests")
         
         // Handle specific actions from backend
-        for action in response.actions ?? [] {
+        if let actions = response.actions {
+            for action in actions {
             print("🎯 BACKEND ACTION: \(action)")
             switch action {
             case "escalate_to_police":
@@ -467,6 +434,7 @@ class VoiceVM: ObservableObject {
             default:
                 print("❓ UNKNOWN ACTION: \(action)")
             }
+        }
         }
         
         // Check if we should trigger navigation based on user intent
@@ -555,10 +523,8 @@ class VoiceVM: ObservableObject {
     }
     
     private func handleSafeLocationsFound(_ response: ChatResponse) {
-        // Backend already found safe locations, just show the response
-        print("📍 SAFE LOCATIONS FOUND - Using backend response directly")
-        // The response.reply already contains the safe places information
-        // No need to trigger another search
+        // Backend found safe locations, trigger local search to get actual places
+        searchNearbyPlacesAutomatically()
     }
     
     private func fallbackToLocalProcessing(_ message: String) {
@@ -601,10 +567,6 @@ class VoiceVM: ObservableObject {
         // Always stop OpenAI conversation completely
             conversation.stopHandlingVoice()
         
-        // Clean up transcript update timer
-        transcriptUpdateTimer?.invalidate()
-        transcriptUpdateTimer = nil
-        
         self.isListening = false
         self.statusText = "Ready to help"
         // Don't clear transcript when stopping - keep it visible
@@ -634,33 +596,21 @@ class VoiceVM: ObservableObject {
         print("🎤 SPEECH RECOGNIZER LOCALE: \(speechRecognizer?.locale.identifier ?? "unknown")")
         
         let request = SFSpeechAudioBufferRecognitionRequest()
-        request.shouldReportPartialResults = true  // Enable interim results
         let inputNode = audioEngine.inputNode
         
         recognitionTask = speechRecognizer?.recognitionTask(with: request) { [weak self] result, error in
             if let result = result {
                 DispatchQueue.main.async {
-                    let newTranscript = result.bestTranscription.formattedString
-                    print("🎤 SPEECH RECOGNITION RESULT: '\(newTranscript)'")
-                    print("🎤 RESULT IS FINAL: \(result.isFinal)")
-                    
-                    // Only update transcript if we have meaningful content
-                    if !newTranscript.isEmpty && newTranscript.count > 2 {
-                        self?.updateTranscriptWithDebouncing(newTranscript)
-                    }
+                    print("🎤 SPEECH RECOGNITION RESULT: '\(result.bestTranscription.formattedString)'")
+                    self?.transcript = result.bestTranscription.formattedString
+                    print("📝 TRANSCRIPT UPDATED: '\(self?.transcript ?? "nil")'")
                     
                     // Handle user responses to navigation confirmation
                     if self?.waitingForNavigationConfirmation == true {
-                        self?.handleUserResponse(newTranscript)
+                        self?.handleUserResponse(result.bestTranscription.formattedString)
                     } else {
-                        // Check for help requests on both final results and when we have complete phrases
-                        if result.isFinal {
-                            self?.checkForHelpRequest(newTranscript)
-                        } else if self?.hasCompleteHelpPhrase(newTranscript) == true {
-                            // If we have a complete help phrase, trigger immediately
-                            print("🎯 COMPLETE HELP PHRASE DETECTED - Triggering search")
-                            self?.checkForHelpRequest(newTranscript)
-                        }
+                        // Check if user is asking for help/places and trigger search
+                        self?.checkForHelpRequest(result.bestTranscription.formattedString)
                     }
                 }
             }
@@ -698,15 +648,6 @@ class VoiceVM: ObservableObject {
     func searchNearbyPlacesAutomatically() {
         print("🔍 SEARCHING FOR PLACES - Function called")
         
-        // Prevent multiple searches from running simultaneously
-        if isSearchingPlaces {
-            print("⏸️ SEARCHING FOR PLACES - Already searching, skipping")
-            return
-        }
-        
-        // Set flag immediately to prevent multiple triggers
-        isSearchingPlaces = true
-        
         guard let locationManager = locationManager,
               let stacyAPIService = stacyAPIService,
               let location = locationManager.location else {
@@ -727,19 +668,19 @@ class VoiceVM: ObservableObject {
         print("🔍 SEARCHING FOR PLACES - Starting search with new API...")
         
         Task {
-            // Use MapKit for real places search instead of backend API
-            let result = await stacyAPIService.searchSafePlacesNearby(
+            let result = await stacyAPIService.getSafeLocations(
+                sessionId: currentSessionId,
                 location: location,
                 radius: 1000
             )
             
             await MainActor.run {
                 switch result {
-                case .success(let places):
-                    print("✅ SEARCHING FOR PLACES - Found \(places.count) places using MapKit")
-                    self.handlePlacesSearchResults(places)
+                case .success(let response):
+                    print("✅ SEARCHING FOR PLACES - Found \(response.places.count) places")
+                    self.handlePlacesSearchResults(response.places)
                 case .failure(let error):
-                    print("❌ SEARCHING FOR PLACES - MapKit search failed: \(error)")
+                    print("❌ SEARCHING FOR PLACES - API failed: \(error)")
                     self.statusText = "Failed to find safe places"
                     self.isSearchingPlaces = false
                     self.isProvidingPlacesResponse = false
@@ -768,35 +709,14 @@ class VoiceVM: ObservableObject {
         print("   Distance: \(nearestPlace.distance)m")
         print("   Type: \(nearestPlace.type)")
         
-        // Convert PlaceData to Place format for UI display
-        let convertedPlaces = sortedPlaces.map { placeData in
-            Place(
-                name: placeData.name,
-                address: placeData.address ?? "Address not available",
-                coordinate: CLLocationCoordinate2D(latitude: placeData.latitude, longitude: placeData.longitude),
-                category: PlaceCategory.fromType(placeData.type),
-                distance: placeData.distance
-            )
-        }
-        
-        // Update the UI with found places
-        DispatchQueue.main.async {
-            self.foundPlaces = convertedPlaces
-            self.statusText = "Found \(places.count) safe places nearby"
-            
-            // Set the suggested place and wait for navigation confirmation
-            self.suggestedPlace = convertedPlaces.first
-            self.waitingForNavigationConfirmation = true
-        }
+        statusText = "Found \(places.count) safe places nearby"
         
         // Generate navigation instruction
         let instruction = generateNavigationInstruction(to: nearestPlace)
         print("🧭 PROCESSING PLACES RESULTS - Navigation instruction: \(instruction)")
         
-        // Send the navigation instruction to be spoken
+        // Send navigation instruction to LLM
         sendNavigationInstructionToLLM(instruction)
-        
-        print("🧭 PROCESSING PLACES RESULTS - Waiting for navigation confirmation")
     }
     
     private func generateNavigationInstruction(to place: PlaceData) -> String {
@@ -941,140 +861,6 @@ class VoiceVM: ObservableObject {
             return "\(Int(distance)) meters"
         } else {
             return String(format: "%.1f kilometers", distance / 1000)
-        }
-    }
-    
-    // MARK: - Test Methods
-    
-    func clearTestStatus() {
-        testStatus = ""
-    }
-    
-    func testChatEndpoint() async {
-        DispatchQueue.main.async {
-            self.testStatus += "🧪 Testing Chat Endpoint...\n"
-        }
-        
-        let result = await stacyAPIService?.sendChatMessage(
-            message: "Test message from Swift app",
-            sessionId: currentSessionId,
-            location: locationManager?.location?.coordinate
-        )
-        
-        DispatchQueue.main.async {
-            switch result {
-            case .success(let response):
-                self.testStatus += "✅ Chat Success: \(response.reply)\n"
-            case .failure(let error):
-                self.testStatus += "❌ Chat Failed: \(error.localizedDescription)\n"
-            case .none:
-                self.testStatus += "❌ Chat Failed: No service available\n"
-            }
-        }
-    }
-    
-    func testSafePlacesSearch() {
-        DispatchQueue.main.async {
-            self.testStatus += "🧪 Testing Safe Places Search...\n"
-        }
-        
-        guard let location = locationManager?.location else {
-            DispatchQueue.main.async {
-                self.testStatus += "❌ Safe Places Failed: No location available\n"
-            }
-            return
-        }
-        
-        Task {
-            let result = await stacyAPIService?.searchSafePlacesNearby(
-                location: location,
-                radius: 1000
-            )
-            
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let places):
-                    self.testStatus += "✅ Safe Places Success: Found \(places.count) places\n"
-                    for place in places.prefix(3) {
-                        self.testStatus += "   - \(place.name) (\(place.type))\n"
-                    }
-                case .failure(let error):
-                    self.testStatus += "❌ Safe Places Failed: \(error.localizedDescription)\n"
-                case .none:
-                    self.testStatus += "❌ Safe Places Failed: No service available\n"
-                }
-            }
-        }
-    }
-    
-    func testEmergencyContact() async {
-        DispatchQueue.main.async {
-            self.testStatus += "🧪 Testing Emergency Contact...\n"
-        }
-        
-        let result = await stacyAPIService?.notifyEmergencyContact(
-            sessionId: currentSessionId,
-            userName: "Test User",
-            triggerReason: "test_request"
-        )
-        
-        DispatchQueue.main.async {
-            switch result {
-            case .success(let response):
-                self.testStatus += "✅ Emergency Success: \(response.message)\n"
-            case .failure(let error):
-                self.testStatus += "❌ Emergency Failed: \(error.localizedDescription)\n"
-            case .none:
-                self.testStatus += "❌ Emergency Failed: No service available\n"
-            }
-        }
-    }
-    
-    func testSMSAction() async {
-        DispatchQueue.main.async {
-            self.testStatus += "🧪 Testing SMS Action...\n"
-        }
-        
-        let result = await stacyAPIService?.sendSMSAction(
-            sessionId: currentSessionId,
-            phone: "+15146605707",
-            message: "Test SMS from Swift app",
-            location: locationManager?.location
-        )
-        
-        DispatchQueue.main.async {
-            switch result {
-            case .success(let response):
-                self.testStatus += "✅ SMS Success: \(response.message)\n"
-            case .failure(let error):
-                self.testStatus += "❌ SMS Failed: \(error.localizedDescription)\n"
-            case .none:
-                self.testStatus += "❌ SMS Failed: No service available\n"
-            }
-        }
-    }
-    
-    func testPhoneCall() async {
-        DispatchQueue.main.async {
-            self.testStatus += "🧪 Testing Phone Call...\n"
-        }
-        
-        let result = await stacyAPIService?.makePhoneCall(
-            sessionId: currentSessionId,
-            phone: "+15146605707",
-            script: "Test call from Swift app",
-            location: locationManager?.location
-        )
-        
-        DispatchQueue.main.async {
-            switch result {
-            case .success(let response):
-                self.testStatus += "✅ Call Success: Call ID \(response.callId)\n"
-            case .failure(let error):
-                self.testStatus += "❌ Call Failed: \(error.localizedDescription)\n"
-            case .none:
-                self.testStatus += "❌ Call Failed: No service available\n"
-            }
         }
     }
 }

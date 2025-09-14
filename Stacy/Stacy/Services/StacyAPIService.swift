@@ -83,9 +83,20 @@ struct SMSResponse: Codable {
 }
 
 struct VoiceCallResponse: Codable {
-    let success: Bool
-    let callId: String
+    let success: Bool?
+    let message: String?
+    let phone: String?
+    let action: String?
+    let reason: String?
+    let call_sid: String?
+    let fallback: Bool?
+    let timestamp: String?
     let error: String?
+    
+    // Computed property for backward compatibility
+    var callId: String? {
+        return call_sid
+    }
 }
 
 struct PlacesRequest: Codable {

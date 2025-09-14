@@ -13,7 +13,7 @@ import { callToolOnce, throttle, generateIdemKey } from './server/idem.js';
 import VAPIEmergencyService from './server/vapi-emergency.js';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: '.env.local' });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
