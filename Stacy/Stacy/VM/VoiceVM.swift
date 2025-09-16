@@ -43,7 +43,7 @@ class VoiceVM: ObservableObject {
     private var currentSessionId: String = ""
     
     init() {
-        self.conversation = Conversation(authToken: ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? "")
+        self.conversation = Conversation(authToken: "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")
         self.stacyAPIService = StacyAPIService()
         self.currentSessionId = "session_\(Date().timeIntervalSince1970)"
         
@@ -253,20 +253,26 @@ class VoiceVM: ObservableObject {
         
         print("📱 IMMEDIATE EMERGENCY CONTACT ALERT - Contact created: \(emergencyContact.phone)")
         
-        // Send SMS to emergency contact
+        // Send emergency notification using new API
         Task {
-            print("📱 IMMEDIATE EMERGENCY CONTACT ALERT - Sending SMS...")
-            let smsResult = await stacyAPIService.alertEmergencyContacts(
-                emergencyContacts: [emergencyContact],
-                location: location.coordinate,
-                message: "🚨 EMERGENCY ALERT: I need help right now! My location: \(location.coordinate.latitude), \(location.coordinate.longitude)"
+            print("📱 IMMEDIATE EMERGENCY CONTACT ALERT - Sending emergency notification...")
+            let result = await stacyAPIService.notifyEmergencyContact(
+                sessionId: currentSessionId,
+                userName: "User",
+                triggerReason: "hard_trigger"
             )
             
-            switch smsResult {
-            case .success(_):
-                print("✅ IMMEDIATE EMERGENCY CONTACT ALERT - SMS sent successfully")
+            switch result {
+            case .success(let response):
+                print("✅ IMMEDIATE EMERGENCY CONTACT ALERT - Notification sent: \(response.messageId ?? "unknown")")
+                await MainActor.run {
+                    self.statusText = "Emergency contact alerted"
+                }
             case .failure(let error):
-                print("❌ IMMEDIATE EMERGENCY CONTACT ALERT - SMS failed: \(error)")
+                print("❌ IMMEDIATE EMERGENCY CONTACT ALERT - Notification failed: \(error)")
+                await MainActor.run {
+                    self.statusText = "Failed to alert emergency contact"
+                }
             }
         }
         
@@ -299,6 +305,60 @@ class VoiceVM: ObservableObject {
             print("🔄 EMERGENCY PROCESSING FLAG RESET - Ready for new requests")
         }
     }
+    
+    // MARK: - VAPI Integration
+    
+    func initiateVAPIEmergencyCall(phoneNumber: String = "+15146605707") {
+        print("📞 INITIATING VAPI EMERGENCY CALL")
+        print("📞 Phone number: \(phoneNumber)")
+        
+        guard let locationManager = locationManager,
+              let location = locationManager.location else {
+            print("❌ VAPI CALL - Location not available")
+            statusText = "Location required for emergency call"
+            return
+        }
+        
+        guard let stacyAPIService = stacyAPIService else {
+            print("❌ VAPI CALL - API service not available")
+            statusText = "Service unavailable"
+            return
+        }
+        
+        print("✅ VAPI CALL - Starting emergency call with location")
+        statusText = "Initiating emergency call..."
+        
+        // Determine emergency level based on current state
+        let emergencyLevel = isProcessingEmergency ? "CRITICAL" : "ELEVATED"
+        
+        Task {
+            let result = await stacyAPIService.initiateVAPICall(
+                phoneNumber: phoneNumber,
+                location: location,
+                sessionId: currentSessionId,
+                emergencyLevel: emergencyLevel
+            )
+            
+            await MainActor.run {
+                switch result {
+                case .success(let response):
+                    print("✅ VAPI CALL - Success: \(response.id)")
+                    self.statusText = "Emergency call initiated - Answer call from +16693292501"
+                    
+                    // Send confirmation to LLM
+                    self.sendMessageToLLM("Emergency VAPI call has been initiated. The user will receive a call shortly from Stacy AI. Call ID: \(response.id)")
+                    
+                case .failure(let error):
+                    print("❌ VAPI CALL - Failed: \(error)")
+                    self.statusText = "Failed to initiate emergency call"
+                    
+                    // Send error to LLM
+                    self.sendMessageToLLM("Emergency VAPI call failed. Please provide alternative assistance to the user.")
+                }
+            }
+        }
+    }
+    
     
     // MARK: - Test Functions
     
@@ -393,34 +453,36 @@ class VoiceVM: ObservableObject {
         print("✅ BACKEND RESPONSE PROCESSED - User can make new requests")
         
         // Handle specific actions from backend
-        for action in response.actions {
-            print("🎯 BACKEND ACTION: \(action)")
-            switch action {
-            case "escalate_to_police":
-                print("🚨 ESCALATING TO POLICE")
-                handlePoliceEscalation(response)
-            case "safe_locations_found":
-                print("📍 SAFE LOCATIONS FOUND")
-                handleSafeLocationsFound(response)
-            case "offer_escalation", "offer_dispatcher":
-                print("📞 OFFERING ESCALATION")
-                // Backend is handling the escalation, just show the response
-                break
-            case "assess_immediate_danger":
-                print("⚠️ ASSESSING IMMEDIATE DANGER")
-                // Backend is asking for more information, just show the response
-                // Don't trigger additional actions, let user respond
-                break
-            case "emergency_handoff", "send_sms", "alert_emergency_contacts", "notify_emergency_contact":
-                print("🚨 EMERGENCY CONTACT ALERT - Backend triggered")
-                // Only trigger once per response, not per action
-                if !isProcessingEmergency {
-                    handleEmergencyContactAlertImmediately()
-                } else {
-                    print("⏸️ EMERGENCY ALREADY PROCESSING - Skipping duplicate action")
+        if let actions = response.actions {
+            for action in actions {
+                print("🎯 BACKEND ACTION: \(action)")
+                switch action {
+                case "escalate_to_police":
+                    print("🚨 ESCALATING TO POLICE")
+                    handlePoliceEscalation(response)
+                case "safe_locations_found":
+                    print("📍 SAFE LOCATIONS FOUND")
+                    handleSafeLocationsFound(response)
+                case "offer_escalation", "offer_dispatcher":
+                    print("📞 OFFERING ESCALATION")
+                    // Backend is handling the escalation, just show the response
+                    break
+                case "assess_immediate_danger":
+                    print("⚠️ ASSESSING IMMEDIATE DANGER")
+                    // Backend is asking for more information, just show the response
+                    // Don't trigger additional actions, let user respond
+                    break
+                case "emergency_handoff", "send_sms", "alert_emergency_contacts", "notify_emergency_contact":
+                    print("🚨 EMERGENCY CONTACT ALERT - Backend triggered")
+                    // Only trigger once per response, not per action
+                    if !isProcessingEmergency {
+                        handleEmergencyContactAlertImmediately()
+                    } else {
+                        print("⏸️ EMERGENCY ALREADY PROCESSING - Skipping duplicate action")
+                    }
+                default:
+                    print("❓ UNKNOWN ACTION: \(action)")
                 }
-            default:
-                print("❓ UNKNOWN ACTION: \(action)")
             }
         }
         
@@ -636,11 +698,11 @@ class VoiceVM: ObservableObject {
         print("🔍 SEARCHING FOR PLACES - Function called")
         
         guard let locationManager = locationManager,
-              let placesService = placesService,
+              let stacyAPIService = stacyAPIService,
               let location = locationManager.location else {
             print("❌ SEARCHING FOR PLACES - Missing required services:")
             print("   LocationManager: \(locationManager != nil)")
-            print("   PlacesService: \(placesService != nil)")
+            print("   StacyAPIService: \(stacyAPIService != nil)")
             print("   Location: \(locationManager?.location != nil)")
             return
         }
@@ -648,24 +710,135 @@ class VoiceVM: ObservableObject {
         print("✅ SEARCHING FOR PLACES - All services available")
         print("   Current location: \(location.coordinate)")
         
-        // Don't stop the LLM - let it continue the conversation
-        
         isSearchingPlaces = true
         isProvidingPlacesResponse = true
         statusText = "Searching for nearby safe places..."
         
-        print("🔍 SEARCHING FOR PLACES - Starting search...")
-        placesService.searchNearbyPlaces(at: location)
+        print("🔍 SEARCHING FOR PLACES - Starting search with new API...")
         
-        // Monitor the places service for results
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            print("🔍 SEARCHING FOR PLACES - Checking results after 2 seconds...")
-            self.handlePlacesSearchResults()
+        Task {
+            let result = await stacyAPIService.getSafeLocations(
+                sessionId: currentSessionId,
+                location: location,
+                radius: 1000
+            )
+            
+            await MainActor.run {
+                switch result {
+                case .success(let response):
+                    print("✅ SEARCHING FOR PLACES - Found \(response.locations.count) places")
+                    if response.locations.isEmpty {
+                        print("❌ SEARCHING FOR PLACES - No locations in response")
+                        self.statusText = "No safe places found nearby"
+                        self.isSearchingPlaces = false
+                        self.isProvidingPlacesResponse = false
+                    } else {
+                        self.handlePlacesSearchResults(response.locations)
+                    }
+                case .failure(let error):
+                    print("❌ SEARCHING FOR PLACES - API failed: \(error)")
+                    self.statusText = "Failed to find safe places"
+                    self.isSearchingPlaces = false
+                    self.isProvidingPlacesResponse = false
+                }
+            }
         }
     }
     
-    private func handlePlacesSearchResults() {
+    private func processPlacesResults(_ places: [PlaceData]) {
+        print("🔍 PROCESSING PLACES RESULTS - \(places.count) places found")
+        
+        isSearchingPlaces = false
+        isProvidingPlacesResponse = false
+        
+        if places.isEmpty {
+            print("❌ PROCESSING PLACES RESULTS - No places found")
+            statusText = "No safe places found nearby"
+            return
+        }
+        
+        // Sort by distance
+        let sortedPlaces = places.sorted { $0.distance < $1.distance }
+        let nearestPlace = sortedPlaces.first!
+        
+        print("✅ PROCESSING PLACES RESULTS - Nearest place: \(nearestPlace.name)")
+        print("   Distance: \(nearestPlace.distance)m")
+        print("   Type: \(nearestPlace.type)")
+        
+        // Convert PlaceData to Place objects for UI display
+        let convertedPlaces = sortedPlaces.map { placeData -> Place in
+            let coordinate = CLLocationCoordinate2D(latitude: placeData.latitude, longitude: placeData.longitude)
+            let category = mapPlaceTypeToCategory(placeData.type)
+            
+            return Place(
+                name: placeData.name,
+                address: placeData.address ?? "Address not available",
+                coordinate: coordinate,
+                category: category,
+                distance: placeData.distance
+            )
+        }
+        
+        // Update the foundPlaces array so UI can display them
+        foundPlaces = convertedPlaces
+        print("✅ PROCESSING PLACES RESULTS - Updated foundPlaces array with \(foundPlaces.count) places")
+        for place in foundPlaces {
+            print("   - \(place.name) (\(place.category.rawValue)) - \(Int(place.distance))m")
+        }
+        
+        statusText = "Found \(places.count) safe places nearby"
+        
+        // Generate navigation instruction
+        let instruction = generateNavigationInstruction(to: nearestPlace)
+        print("🧭 PROCESSING PLACES RESULTS - Navigation instruction: \(instruction)")
+        
+        // Send navigation instruction to LLM
+        sendNavigationInstructionToLLM(instruction)
+    }
+    
+    // Helper function to map PlaceData type to PlaceCategory
+    private func mapPlaceTypeToCategory(_ type: String) -> PlaceCategory {
+        switch type.lowercased() {
+        case "police_station", "police":
+            return .police
+        case "hospital", "medical":
+            return .hospital
+        case "fire_station", "fire":
+            return .fire
+        case "pharmacy", "drugstore":
+            return .pharmacy
+        case "gas_station", "fuel":
+            return .gasStation
+        case "restaurant", "food", "cafe", "coffee":
+            return .fastFood
+        default:
+            // Default to hospital for safety-related places
+            return .hospital
+        }
+    }
+    
+    private func generateNavigationInstruction(to place: PlaceData) -> String {
+        let distance = Int(place.distance)
+        let direction = getDirectionToPlace(place)
+        
+        return "I found \(place.name) \(distance) meters \(direction). It's a \(place.type.replacingOccurrences(of: "_", with: " ")). Would you like me to guide you there?"
+    }
+    
+    private func getDirectionToPlace(_ place: PlaceData) -> String {
+        // Simple direction calculation based on coordinates
+        // This is a basic implementation - in a real app you'd use more sophisticated navigation
+        return "away"
+    }
+    
+    private func handlePlacesSearchResults(_ places: [PlaceData]? = nil) {
         print("🔍 HANDLING PLACES SEARCH RESULTS")
+        
+        if let places = places {
+            // Use places from API response
+            print("✅ HANDLING PLACES SEARCH RESULTS - Using API results: \(places.count) places")
+            processPlacesResults(places)
+            return
+        }
         
         guard let placesService = placesService else { 
             print("❌ HANDLING PLACES SEARCH RESULTS - No places service")
